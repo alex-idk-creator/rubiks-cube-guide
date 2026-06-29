@@ -121,7 +121,6 @@ button {
 .segmented button,
 .copy-button,
 .study-button,
-.fav-button,
 .text-button {
   min-height: 40px;
   border: 1px solid var(--line);
@@ -165,7 +164,6 @@ button {
 .segmented button:hover,
 .copy-button:hover,
 .study-button:hover,
-.fav-button:hover,
 .text-button:hover {
   transform: translateY(-1px);
   border-color: #aebbc8;
@@ -177,14 +175,14 @@ button {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.74fr);
   align-items: center;
   gap: clamp(28px, 5vw, 70px);
-  padding: clamp(42px, 7vw, 86px) clamp(16px, 4vw, 52px);
+  padding: clamp(28px, 5vw, 58px) clamp(16px, 4vw, 52px);
 }
 
 .hero h2 {
   max-width: 840px;
   margin: 0;
-  font-size: clamp(2.7rem, 7vw, 6.2rem);
-  line-height: 0.96;
+  font-size: clamp(2.45rem, 5.4vw, 4.9rem);
+  line-height: 1;
   letter-spacing: 0;
 }
 
@@ -202,6 +200,25 @@ button {
   margin-top: 28px;
 }
 
+.hero-choice {
+  min-width: min(100%, 260px);
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.hero-choice strong,
+.hero-choice span {
+  display: block;
+}
+
+.hero-choice span {
+  color: currentColor;
+  opacity: 0.78;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .hero-cube {
   display: grid;
   place-items: center;
@@ -212,15 +229,15 @@ button {
   padding: clamp(46px, 7vw, 86px) clamp(16px, 4vw, 52px);
 }
 
-#library {
+#assembly {
   padding-top: clamp(30px, 4vw, 56px);
 }
 
-#library .section-heading {
+#assembly .section-heading {
   margin-bottom: 18px;
 }
 
-#library .section-heading h2 {
+#assembly .section-heading h2 {
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
@@ -449,6 +466,116 @@ button {
   font-weight: 950;
 }
 
+.stage-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.stage-step {
+  display: grid;
+  gap: 4px;
+  min-height: 108px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(23, 32, 42, 0.05);
+}
+
+.stage-step.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.stage-step span,
+.stage-step small {
+  color: currentColor;
+  opacity: 0.72;
+  font-weight: 900;
+}
+
+.stage-step strong {
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.cross-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.cross-card,
+.cross-notes,
+.cards-heading {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgba(23, 32, 42, 0.06);
+}
+
+.cross-card,
+.cross-notes {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.cross-card h3,
+.cross-notes h3,
+.cards-heading h3 {
+  margin: 0;
+}
+
+.cross-card p,
+.cross-notes p,
+.cards-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cross-svg {
+  display: block;
+  width: min(100%, 560px);
+  height: auto;
+  margin-inline: auto;
+}
+
+.cross-checks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cross-checks div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7fafc;
+  border: 1px solid var(--line);
+}
+
+.cross-notes ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.stage-tag.cross {
+  width: fit-content;
+  background: #f1f4f8;
+  color: var(--ink);
+}
+
 .library-tools {
   min-width: min(100%, 570px);
   display: grid;
@@ -541,6 +668,13 @@ button {
   color: var(--muted);
 }
 
+.finder-mini-result {
+  grid-column: 2;
+  align-self: end;
+  margin: 0;
+  color: var(--muted);
+}
+
 .finder-result strong {
   color: var(--ink);
 }
@@ -566,7 +700,7 @@ button {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: 6px;
 }
 
@@ -603,6 +737,17 @@ button {
   grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
   align-items: start;
   gap: 18px;
+}
+
+.cards-column {
+  display: grid;
+  gap: 12px;
+}
+
+.cards-heading {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
 }
 
 .study-panel {
@@ -657,19 +802,6 @@ button {
 .stage-tag.pll {
   background: #eaf0ff;
   color: #2850b8;
-}
-
-.fav-button {
-  display: grid;
-  place-items: center;
-  min-width: 42px;
-  padding: 8px;
-  font-size: 1.1rem;
-}
-
-.fav-button.active {
-  border-color: #e0b927;
-  background: #fff8da;
 }
 
 .algo-card {
@@ -730,6 +862,29 @@ button {
 
 .recognition strong {
   color: var(--ink);
+}
+
+.case-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.case-facts span {
+  min-height: 52px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7fafc;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.case-facts b {
+  display: block;
+  color: var(--ink);
+  font-size: 0.78rem;
+  text-transform: uppercase;
 }
 
 .action-guide {
@@ -885,11 +1040,22 @@ button {
   .lesson-grid,
   .principle-grid,
   .starter-row,
+  .cross-layout,
+  .cross-checks,
   .library-layout,
   .cards-grid,
   .finder-step,
   .case-finder {
     grid-template-columns: 1fr;
+  }
+
+  .stage-stepper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stage-step {
+    min-height: 88px;
+    padding: 12px;
   }
 
   .finder-step {
@@ -909,6 +1075,10 @@ button {
 
   .finder-result {
     font-size: 0.9rem;
+  }
+
+  .finder-mini-result {
+    grid-column: 1 / -1;
   }
 
   .case-finder {
@@ -956,7 +1126,7 @@ button {
     line-height: 1;
   }
 
-  #library .section-heading h2 {
+  #assembly .section-heading h2 {
     font-size: clamp(1.8rem, 9vw, 2.35rem);
   }
 
@@ -995,10 +1165,14 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .case-facts {
+    grid-template-columns: 1fr;
+  }
+
   .finder-buttons {
     display: grid;
     grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
