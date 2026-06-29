@@ -30,7 +30,15 @@ const notation = [
   { move: "R2", title: "Двойной ход", face: "R", dir: "double", text: "R2 значит повернуть правую грань два раза, на 180 градусов." },
   { move: "U2", title: "Верх на 180", face: "U", dir: "double", text: "U2 — верхний слой на пол-оборота. Направление неважно." },
   { move: "M", title: "Средний слой", face: "M", dir: "ccw", text: "Крути средний вертикальный слой между левой и правой гранью." },
-  { move: "x y z", title: "Поворот куба", face: "cube", dir: "turn", text: "Это поворот всего кубика в руках, а не отдельной грани." },
+  { move: "M'", title: "Средний обратно", face: "M", dir: "cw", text: "Тот же средний слой, но в обратную сторону." },
+  { move: "M2", title: "Средний на 180", face: "M", dir: "double", text: "Средний слой поворачивается два раза." },
+  { move: "r", title: "Широкий R", face: "Rw", dir: "cw", text: "Крути правую грань вместе со средним слоем. В формулах это маленькая r." },
+  { move: "r'", title: "Широкий R обратно", face: "Rw", dir: "ccw", text: "Два правых слоя идут обратно." },
+  { move: "d", title: "Широкий D", face: "Dw", dir: "cw", text: "Крути нижний слой вместе со средним горизонтальным слоем." },
+  { move: "d'", title: "Широкий D обратно", face: "Dw", dir: "ccw", text: "Два нижних слоя идут обратно." },
+  { move: "x", title: "Поворот x", face: "cube", dir: "turn", text: "Поверни весь куб как ход R: это смена хвата, не формула грани." },
+  { move: "y", title: "Поворот y", face: "cube", dir: "turn", text: "Поверни весь куб вокруг вертикальной оси, как верхний слой U." },
+  { move: "z", title: "Поворот z", face: "cube", dir: "turn", text: "Поверни весь куб вокруг передней оси, как ход F." },
 ];
 
 const lessons = [
@@ -155,13 +163,13 @@ const algorithms = [
   { id: "f2l-41", stage: "F2L", level: "all", name: "Case 41", group: "Пара почти готова", alg: "U' L' U L U F U' F'", note: "Зеркальная версия через левую руку и переднюю грань.", visual: { type: "f2l", slot: "FL", corner: "UFL", edge: "UF", pair: true } },
   { id: "f2l-42", stage: "F2L", level: "all", name: "Case 42", group: "Учебный контроль", alg: "R U' R' U F' U' F", note: "Дополнительный учебный вариант для полного набора: сравни цвета пары, поставь ее над слотом и вставь без угадывания.", visual: { type: "f2l", slot: "FR", corner: "UR", edge: "UF", pair: true } },
 
-  { id: "oll-27", stage: "OLL", level: "start", name: "Sune", group: "OCLL", alg: "R U R' U R U2 R'", note: "Один угол уже желтый сверху. Остальные углы развернутся этой формулой.", visual: { type: "oll", top: "001111111", sides: ["F1", "R0", "R2"], hold: "готовый угол спереди-слева" } },
-  { id: "oll-26", stage: "OLL", level: "start", name: "Anti-Sune", group: "OCLL", alg: "R U2 R' U' R U' R'", note: "Зеркальный Sune. Сравни боковые желтые наклейки перед стартом.", visual: { type: "oll", top: "100111111", sides: ["F1", "L0", "L2"], hold: "готовый угол спереди-справа" } },
-  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U R' U R U' R' U R U2 R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2", "L0", "R2"], hold: "любой стороной с парой боковых желтых" } },
-  { id: "oll-22", stage: "OLL", level: "more", name: "Pi", group: "OCLL", alg: "R U2 R2 U' R2 U' R2 U2 R", note: "Похоже на две пары боковых желтых наклеек.", visual: { type: "oll", top: "000111000", sides: ["F0", "F2", "B0", "B2"], hold: "пары по переду и заду" } },
-  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D R' U2 R D' R' U2 R'", note: "Две боковые желтые наклейки на одной стороне выглядят как фары.", visual: { type: "oll", top: "101111101", sides: ["F0", "F2"], hold: "фары спереди" } },
-  { id: "oll-24", stage: "OLL", level: "more", name: "Chameleon", group: "OCLL", alg: "r U R' U' r' F R F'", note: "Два готовых угла по диагонали. Ориентируйся по боковым желтым.", visual: { type: "oll", top: "101111010", sides: ["F2", "R2"], hold: "диагональ сверху" } },
-  { id: "oll-25", stage: "OLL", level: "more", name: "Bowtie", group: "OCLL", alg: "F' r U R' U' r' F R", note: "Тоже диагональ, но боковые желтые стоят иначе.", visual: { type: "oll", top: "010111101", sides: ["F0", "R2"], hold: "форма бабочки" } },
+  { id: "oll-27", stage: "OLL", level: "start", name: "Sune", group: "OCLL", alg: "R U R' U R U2 R'", note: "Один угол уже желтый сверху. Остальные углы развернутся этой формулой.", visual: { type: "oll", top: "010111110", sides: ["F1", "R0", "R2"], hold: "готовый угол спереди-слева" } },
+  { id: "oll-26", stage: "OLL", level: "start", name: "Anti-Sune", group: "OCLL", alg: "R U2 R' U' R U' R'", note: "Зеркальный Sune. Сравни боковые желтые наклейки перед стартом.", visual: { type: "oll", top: "010111011", sides: ["F1", "L0", "L2"], hold: "готовый угол спереди-справа" } },
+  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U R' U R U' R' U R U2 R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2", "B0", "B2"], hold: "без желтых углов сверху, фары на двух сторонах" } },
+  { id: "oll-22", stage: "OLL", level: "more", name: "Pi", group: "OCLL", alg: "R U2 R2 U' R2 U' R2 U2 R", note: "Нет готовых углов сверху. Отличается парой боковых желтых наклеек на одной стороне.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2"], hold: "фары на одной стороне" } },
+  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D R' U2 R D' R' U2 R'", note: "Два угла уже желтые сверху на одной стороне. Держи боковые фары слева.", visual: { type: "oll", top: "110111110", sides: ["L0", "L2"], hold: "фары слева" } },
+  { id: "oll-24", stage: "OLL", level: "more", name: "Chameleon", group: "OCLL", alg: "r U R' U' r' F R F'", note: "Два готовых угла по диагонали. Ориентируйся по боковым желтым.", visual: { type: "oll", top: "011111110", sides: ["F2", "B0"], hold: "желтые углы по диагонали" } },
+  { id: "oll-25", stage: "OLL", level: "more", name: "Bowtie", group: "OCLL", alg: "F' r U R' U' r' F R", note: "Два готовых угла рядом, но боковые желтые образуют форму бабочки.", visual: { type: "oll", top: "010111111", sides: ["F0", "R2"], hold: "форма бабочки по боковым наклейкам" } },
 
   { id: "pll-h", stage: "PLL", level: "start", name: "H-perm", group: "Только ребра", alg: "M2 U M2 U2 M2 U M2", note: "Меняет противоположные ребра. Углы уже правильные.", visual: { type: "pll", kind: "edges-opposite", blocks: ["corners"], arrows: "opposite" } },
   { id: "pll-ua", stage: "PLL", level: "start", name: "Ua-perm", group: "Только ребра", alg: "R U' R U R U R U' R' U' R2", note: "Цикл трех ребер по верхнему слою.", visual: { type: "pll", kind: "edges-cycle-cw", blocks: ["corners"], arrows: "cw" } },
@@ -192,11 +200,27 @@ const state = {
   level: "start",
   query: "",
   finder: "",
+  f2lFilters: {
+    corner: "",
+    white: "",
+    edge: "",
+    pair: "",
+    slot: "",
+  },
   selectedId: "f2l-1",
+  detailId: "",
+  returnAnchor: "",
   showAnswer: false,
+  theme: localStorage.getItem("cfop-theme") || "dark",
 };
 
 const app = document.querySelector("#app");
+
+function applyTheme() {
+  document.documentElement.dataset.theme = state.theme;
+}
+
+applyTheme();
 
 function tokens(alg) {
   return alg.split(/\s+/).filter(Boolean);
@@ -266,19 +290,50 @@ function cubeSvg({ active = [], arrowFace = null, dir = "cw", labels = [], piece
   `;
 }
 
+function heroVisualSvg() {
+  const fills = {
+    U00: COLORS.U, U01: COLORS.U, U02: COLORS.U, U10: COLORS.U, U11: COLORS.U, U12: COLORS.U, U20: COLORS.U, U21: COLORS.U, U22: COLORS.U,
+    F00: COLORS.F, F01: COLORS.F, F02: COLORS.F, F10: COLORS.F, F11: COLORS.F, F12: COLORS.F, F20: COLORS.D, F21: COLORS.F, F22: COLORS.F,
+    R00: COLORS.R, R01: COLORS.R, R02: COLORS.R, R10: COLORS.R, R11: COLORS.R, R12: COLORS.R, R20: COLORS.D, R21: COLORS.R, R22: COLORS.R,
+  };
+  return `
+    <svg class="hero-visual" viewBox="0 0 430 360" role="img" aria-label="Учебный пример CFOP с цветным кубиком">
+      <defs>
+        <filter id="heroShadow" x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#17202a" flood-opacity="0.18"/>
+        </filter>
+      </defs>
+      <g transform="translate(46 28) scale(1.02)" filter="url(#heroShadow)">
+        ${faceTilesDetailed("U", fills)}
+        ${faceTilesDetailed("F", fills)}
+        ${faceTilesDetailed("R", fills)}
+      </g>
+      <g class="hero-pair">
+        <rect x="278" y="104" width="74" height="58" rx="12" fill="var(--surface)" stroke="${COLORS.ink}" stroke-width="4"/>
+        <rect x="288" y="114" width="24" height="38" rx="6" fill="${COLORS.F}" stroke="${COLORS.line}" stroke-width="2"/>
+        <rect x="316" y="114" width="24" height="38" rx="6" fill="${COLORS.R}" stroke="${COLORS.line}" stroke-width="2"/>
+      </g>
+      <path d="M284 198 C314 220 330 248 322 284" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="322" cy="288" r="10" fill="var(--accent)"/>
+      <text x="215" y="332" text-anchor="middle" class="svg-note">смотри на цветные элементы, остальное игнорируй</text>
+    </svg>`;
+}
+
 function frontCell(row, col, fill, active = false) {
   const size = 52;
   const gap = 4;
   const x = 88 + col * (size + gap);
   const y = 54 + row * (size + gap);
-  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${COLORS.line}" stroke-width="${active ? 4 : 2}"/>`;
+  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 4 : 2}"/>`;
 }
 
 function frontLayerCells(face) {
   if (face === "R") return [[0, 2], [1, 2], [2, 2]];
+  if (face === "Rw") return [[0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]];
   if (face === "L") return [[0, 0], [1, 0], [2, 0]];
   if (face === "U") return [[0, 0], [0, 1], [0, 2]];
   if (face === "D") return [[2, 0], [2, 1], [2, 2]];
+  if (face === "Dw") return [[1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
   if (face === "M") return [[0, 1], [1, 1], [2, 1]];
   return [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
 }
@@ -288,10 +343,10 @@ function frontArrow(face, dir) {
   const line = `fill="none" stroke="${COLORS.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" ${marker}`;
   const reverse = dir === "ccw";
   if (dir === "double") return `<path d="M278 82 L278 214" ${line}/><path d="M54 214 L54 82" ${line}/><text x="166" y="250" text-anchor="middle" class="svg-label">180°</text>`;
-  if (face === "R") return reverse ? `<path d="M274 78 L274 214" ${line}/>` : `<path d="M274 214 L274 78" ${line}/>`;
+  if (face === "R" || face === "Rw") return reverse ? `<path d="M274 78 L274 214" ${line}/>` : `<path d="M274 214 L274 78" ${line}/>`;
   if (face === "L") return reverse ? `<path d="M58 214 L58 78" ${line}/>` : `<path d="M58 78 L58 214" ${line}/>`;
   if (face === "U") return reverse ? `<path d="M248 34 L84 34" ${line}/>` : `<path d="M84 34 L248 34" ${line}/>`;
-  if (face === "D") return reverse ? `<path d="M84 242 L248 242" ${line}/>` : `<path d="M248 242 L84 242" ${line}/>`;
+  if (face === "D" || face === "Dw") return reverse ? `<path d="M84 242 L248 242" ${line}/>` : `<path d="M248 242 L84 242" ${line}/>`;
   if (face === "M") return `<path d="M166 78 L166 214" ${line}/>`;
   if (face === "cube") return `<path d="M64 250 C38 178 54 78 124 40" ${line}/><path d="M268 34 C300 112 278 212 206 250" ${line}/>`;
   return reverse
@@ -302,9 +357,11 @@ function frontArrow(face, dir) {
 function notationSvg(item) {
   const colorByFace = {
     R: COLORS.R,
+    Rw: COLORS.R,
     L: COLORS.L,
     U: COLORS.U,
     D: COLORS.D,
+    Dw: COLORS.D,
     F: COLORS.F,
     B: COLORS.B,
     M: COLORS.slot,
@@ -315,9 +372,11 @@ function notationSvg(item) {
   const highlight = colorByFace[face] || COLORS.F;
   const faceLabel = {
     R: "правая грань",
+    Rw: "два правых слоя",
     L: "левая грань",
     U: "верхний слой",
     D: "нижний слой",
+    Dw: "два нижних слоя",
     F: "передняя грань",
     B: "задняя грань",
     M: "средний слой",
@@ -330,7 +389,7 @@ function notationSvg(item) {
           <path d="M 0 0 L 10 5 L 0 10 z" fill="${COLORS.ink}"></path>
         </marker>
       </defs>
-      <rect x="72" y="38" width="188" height="188" rx="18" fill="#eef3f7" stroke="${COLORS.ink}" stroke-width="5"/>
+      <rect x="72" y="38" width="188" height="188" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
       ${face === "B" ? `<rect x="62" y="28" width="208" height="208" rx="22" fill="none" stroke="${COLORS.B}" stroke-width="7" stroke-dasharray="9 8" opacity=".9"/>` : ""}
       ${face === "cube" ? `<rect x="58" y="24" width="216" height="216" rx="24" fill="rgba(15,139,141,.08)" stroke="${COLORS.slot}" stroke-width="6"/>` : ""}
       ${Array.from({ length: 9 }).map((_, index) => {
@@ -358,11 +417,53 @@ function slotPalette(slot = "FR") {
   return { down: COLORS.D, front: COLORS.F, side, sideName };
 }
 
+function paintF2LStickerSet(fills, visual, colors) {
+  const put = (key, color) => {
+    if (key) fills[key] = color;
+  };
+  const cornerMap = {
+    UFR: ["U22", "F02", "R00"],
+    UFL: ["U20", "F00", "F01"],
+    UBR: ["U02", "R01", "R00"],
+    UBL: ["U00", "U01", "F00"],
+    UR: ["U12", "R00", "R01"],
+    UL: ["U10", "F00", "U20"],
+    UF: ["U21", "F00", "F01"],
+    UB: ["U01", "R00", "U02"],
+    FR: ["F22", "R20", "F21"],
+    FL: ["F20", "F21", "U20"],
+    BR: ["R22", "R21", "U02"],
+    BL: ["F20", "U00", "F21"],
+    U: ["U11", "U21", "U12"],
+  };
+  const edgeMap = {
+    UR: ["U12", "R00"],
+    UL: ["U10", "F00"],
+    UF: ["U21", "F00"],
+    UB: ["U01", "R00"],
+    FR: ["F12", "R10"],
+    FL: ["F10", "F11"],
+    BR: ["R12", "R11"],
+    BL: ["F10", "F20"],
+  };
+  const cornerKeys = cornerMap[visual.corner || "UFR"] || cornerMap.UFR;
+  const edgeKeys = edgeMap[visual.edge || "UR"] || edgeMap.UR;
+  if (visual.corner !== "none") {
+    put(cornerKeys[0], colors.down);
+    put(cornerKeys[1], colors.front);
+    put(cornerKeys[2], colors.side);
+  }
+  if (visual.edge !== "none") {
+    put(edgeKeys[0], colors.front);
+    put(edgeKeys[1], colors.side);
+  }
+}
+
 function faceTilesDetailed(face, fills = {}) {
   const cfg = {
-    U: { o: [150, 20], a: [34, 16], b: [-34, 16], base: "#eef3f7" },
-    F: { o: [48, 68], a: [34, 16], b: [0, 36], base: "#d9e0e7" },
-    R: { o: [252, 68], a: [-34, 16], b: [0, 36], base: "#d9e0e7" },
+    U: { o: [150, 20], a: [34, 16], b: [-34, 16], base: "var(--cube-shell)" },
+    F: { o: [48, 68], a: [34, 16], b: [0, 36], base: "var(--cube-muted)" },
+    R: { o: [252, 68], a: [-34, 16], b: [0, 36], base: "var(--cube-muted)" },
   }[face];
   let out = "";
   for (let r = 0; r < 3; r += 1) {
@@ -370,7 +471,7 @@ function faceTilesDetailed(face, fills = {}) {
       const key = `${face}${r}${c}`;
       const fill = fills[key] || cfg.base;
       const active = Boolean(fills[key]);
-      out += `<polygon points="${tile(cfg.o, cfg.a, cfg.b, c, r)}" fill="${fill}" opacity="${active ? 1 : 0.42}" stroke="${COLORS.line}" stroke-width="${active ? 3 : 2}" />`;
+      out += `<polygon points="${tile(cfg.o, cfg.a, cfg.b, c, r)}" fill="${fill}" opacity="${active ? 1 : 0.42}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}" />`;
     }
   }
   return out;
@@ -397,7 +498,7 @@ function stickerPiece(kind, at, slot, wrong = false) {
     </g>`;
 }
 
-function f2lSvg(visual) {
+function f2lSvg(visual, options = {}) {
   const slot = visual.slot || "FR";
   const colors = slotPalette(slot);
   const frontSlotCol = slot.includes("L") ? 0 : 2;
@@ -411,11 +512,14 @@ function f2lSvg(visual) {
     [`R2${sideSlotCol}`]: colors.side,
     R21: colors.side,
   };
+  paintF2LStickerSet(fills, visual, colors);
   const pieces = [];
-  if (visual.corner !== "none") pieces.push(stickerPiece("corner", visual.corner || "UFR", slot, visual.wrong));
-  if (visual.edge !== "none") pieces.push(stickerPiece("edge", visual.edge || "UR", slot, visual.wrong));
+  if (!options.flat) {
+    if (visual.corner !== "none") pieces.push(stickerPiece("corner", visual.corner || "UFR", slot, visual.wrong));
+    if (visual.edge !== "none") pieces.push(stickerPiece("edge", visual.edge || "UR", slot, visual.wrong));
+  }
   return `
-    <svg class="cube-svg f2l-example-svg" viewBox="0 0 330 320" role="img" aria-label="F2L: цветная пара и цветной слот">
+    <svg class="cube-svg f2l-example-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 320" role="img" aria-label="F2L: цветная пара и цветной слот">
       <defs>
         <filter id="softShadowF2L" x="-20%" y="-20%" width="140%" height="150%">
           <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#17202a" flood-opacity="0.14"/>
@@ -436,41 +540,62 @@ function f2lSvg(visual) {
 }
 
 function ollSvg(visual) {
-  const active = [];
-  [...visual.top].forEach((cell, index) => {
-    if (cell === "1") active.push(`U${Math.floor(index / 3)}${index % 3}`);
-  });
-  const sideMarks = (visual.sides || []).map((code) => {
-    const face = code[0] === "L" ? "F" : code[0] === "B" ? "R" : code[0];
-    const i = Number(code.slice(1)) || 0;
-    const p = face === "F" ? [70 + i * 35, 230] : [260 - i * 32, 230];
-    return `<circle cx="${p[0]}" cy="${p[1]}" r="11" fill="${COLORS.U}" stroke="${COLORS.ink}" stroke-width="4"/>`;
-  });
-  return cubeSvg({
-    active,
-    pieces: sideMarks,
-    labels: [{ x: 165, y: 300, text: "крест готов; смотри углы" }],
-    title: "OLL после желтого креста",
-  });
+  const sideSet = new Set(visual.sides || []);
+  const topCell = (index) => {
+    const row = Math.floor(index / 3);
+    const col = index % 3;
+    const x = 92 + col * 48;
+    const y = 72 + row * 48;
+    const yellow = visual.top[index] === "1";
+    return `<rect x="${x}" y="${y}" width="43" height="43" rx="8" fill="${yellow ? COLORS.U : "var(--cube-shell)"}" opacity="${yellow ? 1 : 0.62}" stroke="var(--cube-line)" stroke-width="${yellow ? 4 : 2}"/>`;
+  };
+  const sideDot = (face, index, x, y) => {
+    const active = sideSet.has(`${face}${index}`);
+    return `<rect class="side-sticker" x="${x}" y="${y}" width="34" height="18" rx="6" fill="${active ? COLORS.U : "var(--cube-muted)"}" opacity="${active ? 1 : 0.55}" stroke="var(--cube-line)" stroke-width="2"/>`;
+  };
+  return `
+    <svg class="oll-flat-svg" viewBox="0 0 330 300" role="img" aria-label="OLL после желтого креста: верх и боковые желтые наклейки">
+      <text x="165" y="28" text-anchor="middle" class="svg-note">желтый крест готов — сравни углы</text>
+      ${[0, 1, 2].map((i) => sideDot("B", i, 92 + i * 48, 44)).join("")}
+      ${[0, 1, 2].map((i) => sideDot("F", i, 92 + i * 48, 226)).join("")}
+      ${[0, 1, 2].map((i) => sideDot("L", i, 58, 76 + i * 48)).join("")}
+      ${[0, 1, 2].map((i) => sideDot("R", i, 238, 76 + i * 48)).join("")}
+      ${Array.from({ length: 9 }).map((_, index) => topCell(index)).join("")}
+      <text x="165" y="282" text-anchor="middle" class="svg-note">${visual.hold || "поверни U, пока рисунок совпадет"}</text>
+    </svg>`;
 }
 
 function pllSvg(visual) {
-  const pieces = [];
-  const ring = [[150, 48], [222, 82], [250, 160], [218, 238], [150, 270], [82, 238], [50, 160], [78, 82]];
-  ring.forEach(([x, y], i) => {
-    const color = i % 2 === 0 ? COLORS.R : COLORS.F;
-    pieces.push(`<rect x="${x - 16}" y="${y - 16}" width="32" height="32" rx="8" fill="${color}" stroke="${COLORS.ink}" stroke-width="4"/>`);
-  });
+  const blocks = new Set(visual.blocks || []);
+  const sideColors = { front: COLORS.F, right: COLORS.R, back: COLORS.B, left: COLORS.L };
+  const sideBar = (side, x, y, w, h) => {
+    const solved = blocks.has(side) || blocks.has("corners") || blocks.has("edges");
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${solved ? sideColors[side] : "var(--cube-muted)"}" opacity="${solved ? 1 : 0.62}" stroke="var(--cube-line)" stroke-width="${solved ? 4 : 2}"/>`;
+  };
   const arrow = visual.arrows === "cw" || visual.arrows === "cycle" ? "↻" : visual.arrows === "ccw" ? "↺" : visual.arrows === "diagonal" ? "⤫" : visual.arrows === "cross" ? "↕" : "⇄";
-  pieces.push(`<circle cx="150" cy="160" r="50" fill="rgba(255,255,255,.82)" stroke="${COLORS.ink}" stroke-width="4"/><text x="150" y="174" text-anchor="middle" class="pll-arrow">${arrow}</text>`);
-  const labels = [{ x: 165, y: 300, text: "ищи блоки и обмены" }];
-  return cubeSvg({ active: ["U"], pieces, labels, title: "PLL распознавание" });
+  return `
+    <svg class="pll-flat-svg" viewBox="0 0 330 300" role="img" aria-label="PLL: готовые блоки и перестановка">
+      <text x="165" y="28" text-anchor="middle" class="svg-note">верх желтый — ищи боковые блоки</text>
+      ${sideBar("back", 94, 44, 142, 24)}
+      ${sideBar("front", 94, 232, 142, 24)}
+      ${sideBar("left", 58, 82, 24, 134)}
+      ${sideBar("right", 248, 82, 24, 134)}
+      <rect x="92" y="76" width="146" height="146" rx="18" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="5"/>
+      ${Array.from({ length: 9 }).map((_, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        return `<rect x="${104 + col * 42}" y="${88 + row * 42}" width="36" height="36" rx="7" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>`;
+      }).join("")}
+      <circle cx="165" cy="149" r="42" fill="var(--surface)" stroke="var(--cube-line)" stroke-width="4"/>
+      <text x="165" y="164" text-anchor="middle" class="pll-arrow">${arrow}</text>
+      <text x="165" y="282" text-anchor="middle" class="svg-note">${blocks.has("none") ? "готовых блоков нет" : "цветные полосы — готовые блоки"}</text>
+    </svg>`;
 }
 
-function visualSvg(item) {
+function visualSvg(item, options = {}) {
   if (item.visual?.type === "oll") return ollSvg(item.visual);
   if (item.visual?.type === "pll") return pllSvg(item.visual);
-  return f2lSvg(item.visual || {});
+  return f2lSvg(item.visual || {}, options);
 }
 
 function algorithmHtml(item, hidden = false) {
@@ -576,6 +701,55 @@ function renderActionGuide(item) {
     </div>`;
 }
 
+function firstF2LTimeline(item) {
+  if (item.id !== "f2l-1") return "";
+  const frames = [
+    ["Старт", "Пара уже сверху. Синий центр спереди, красный справа, слот пустой.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
+    ["U", "Уводим пару верхним слоем, чтобы правый слот не был закрыт.", { type: "f2l", slot: "FR", corner: "UBR", edge: "UB", pair: true }],
+    ["R", "Правая грань поднимается: место для пары открыто.", { type: "f2l", slot: "FR", corner: "UR", edge: "UB", pair: true }],
+    ["U'", "Пара возвращается над открытое место.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
+    ["R'", "Правая грань опускается, пара оказывается в слоте.", { type: "f2l", slot: "FR", corner: "FR", edge: "FR", pair: true }],
+  ];
+  return `
+    <section class="case-section">
+      <div class="case-section-heading"><p class="eyebrow">Правая вставка по кадрам</p><h3>Зачем нужен каждый ход</h3></div>
+      <div class="timeline-grid">
+        ${frames.map(([move, text, visual], index) => `
+          <article class="timeline-card">
+            <span>${index + 1}</span>
+            ${f2lSvg(visual, { compact: true, flat: true })}
+            <h4>${move}</h4>
+            <p>${text}</p>
+          </article>`).join("")}
+      </div>
+    </section>`;
+}
+
+function renderCaseDetail(item) {
+  const previous = state.returnAnchor || item.id;
+  return `
+    <section class="section case-detail" id="case-detail">
+      <button class="back-button" data-back-to-list="${previous}">← Назад к списку</button>
+      <div class="case-hero">
+        <div class="case-visual">
+          <span class="stage-tag ${item.stage.toLowerCase()}">${item.stage} · ${item.group}</span>
+          ${visualSvg(item)}
+        </div>
+        <div class="case-copy">
+          <p class="eyebrow">Полный разбор</p>
+          <h2>${item.name}</h2>
+          <p>${item.note}</p>
+          ${renderCaseFacts(item)}
+          <p class="study-label">Формула</p>
+          ${algorithmHtml(item)}
+          <button class="copy-button" data-copy="${item.alg}">Копировать формулу</button>
+        </div>
+      </div>
+      ${firstF2LTimeline(item)}
+      ${renderActionGuide(item)}
+    </section>`;
+}
+
 function levelsForStage(stage) {
   if (stage === "PLL") return [
     ["start", "Начать"],
@@ -593,6 +767,43 @@ function levelsForStage(stage) {
   ];
 }
 
+function f2lAttributes(item) {
+  const visual = item.visual || {};
+  const corner = visual.corner || "";
+  const edge = visual.edge || "";
+  const inSlot = (value) => ["FR", "FL", "BR", "BL"].includes(value);
+  return {
+    corner: inSlot(corner) ? "slot" : "top",
+    white: corner === "U" ? "up" : corner.startsWith("U") || ["UR", "UF", "UL", "UB"].includes(corner) ? "side" : "slot",
+    edge: inSlot(edge) ? "slot" : "top",
+    pair: visual.wrong ? "wrong" : visual.pair ? "ready" : "separate",
+    slot: (visual.slot || "FR").includes("L") ? "left" : "right",
+  };
+}
+
+function resetF2LFilters() {
+  state.f2lFilters = { corner: "", white: "", edge: "", pair: "", slot: "" };
+}
+
+function jumpToTop() {
+  app?.scrollIntoView({ block: "start", inline: "nearest" });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  requestAnimationFrame(() => {
+    app?.scrollIntoView({ block: "start", inline: "nearest" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
+  setTimeout(() => {
+    app?.scrollIntoView({ block: "start", inline: "nearest" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, 0);
+}
+
 function filteredAlgorithms() {
   const query = state.query.trim().toLowerCase();
   const allowedLevels = state.level === "all" ? ["start", "more", "all"] : state.level === "more" ? ["start", "more"] : ["start"];
@@ -601,8 +812,9 @@ function filteredAlgorithms() {
     const stageOk = item.stage === state.filter;
     const levelOk = allowedLevels.includes(item.level);
     const finderOk = !finderOption || finderOption.match(item);
+    const f2lOk = item.stage !== "F2L" || Object.entries(state.f2lFilters).every(([key, value]) => !value || f2lAttributes(item)[key] === value);
     const haystack = `${item.name} ${item.stage} ${item.group} ${item.alg} ${item.note}`.toLowerCase();
-    return stageOk && levelOk && finderOk && (!query || haystack.includes(query));
+    return stageOk && levelOk && finderOk && f2lOk && (!query || haystack.includes(query));
   });
 }
 
@@ -613,12 +825,13 @@ function selectFirstVisible() {
 
 function setFilter(filter) {
   state.filter = filter;
-  state.level = "start";
+  state.level = filter === "F2L" ? "all" : filter === "OLL" ? "more" : "start";
   state.query = "";
   state.finder = "";
+  resetF2LFilters();
   if (filter !== "Cross") selectFirstVisible();
   render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  jumpToTop();
 }
 
 function renderHeader() {
@@ -632,6 +845,7 @@ function renderHeader() {
         <button class="${state.view === "home" ? "active" : ""}" data-view="home">Главная</button>
         <button class="${state.view === "assembly" ? "active" : ""}" data-view="assembly">Начать сборку</button>
         <button class="${state.view === "notation" ? "active" : ""}" data-view="notation">Обозначения</button>
+        <button class="theme-toggle" data-theme-toggle>${state.theme === "dark" ? "Светлая тема" : "Тёмная тема"}</button>
       </nav>
     </header>`;
 }
@@ -648,7 +862,7 @@ function renderHero() {
           <button class="button hero-choice" data-view="notation"><strong>Понять формулы</strong><span>R, U, F, штрих и двойные ходы</span></button>
         </div>
       </div>
-      <div class="hero-cube">${cubeSvg({ active: ["U", "F", "R"], arrowFace: "U", dir: "turn", title: "Кубик в учебном ракурсе" })}</div>
+      <div class="hero-cube">${heroVisualSvg()}</div>
     </section>`;
 }
 
@@ -726,7 +940,7 @@ function renderStageStepper() {
 }
 
 function crossSvg() {
-  const cell = (x, y, fill, active = false) => `<rect x="${x}" y="${y}" width="46" height="46" rx="8" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${COLORS.ink}" stroke-width="${active ? 4 : 2}"/>`;
+  const cell = (x, y, fill, active = false) => `<rect x="${x}" y="${y}" width="46" height="46" rx="8" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 4 : 2}"/>`;
   const bottom = [];
   for (let r = 0; r < 3; r += 1) {
     for (let c = 0; c < 3; c += 1) {
@@ -736,8 +950,8 @@ function crossSvg() {
   }
   const side = (x, y, color, label) => `
     <g>
-      <rect x="${x}" y="${y}" width="86" height="42" rx="8" fill="${color}" stroke="${COLORS.ink}" stroke-width="4"/>
-      <rect x="${x + 22}" y="${y + 48}" width="42" height="42" rx="8" fill="${COLORS.D}" stroke="${COLORS.ink}" stroke-width="4"/>
+      <rect x="${x}" y="${y}" width="86" height="42" rx="8" fill="${color}" stroke="var(--cube-line)" stroke-width="4"/>
+      <rect x="${x + 22}" y="${y + 48}" width="42" height="42" rx="8" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="4"/>
       <text x="${x + 43}" y="${y - 10}" text-anchor="middle" class="svg-note">${label}</text>
     </g>`;
   return `
@@ -746,7 +960,7 @@ function crossSvg() {
       ${side(304, 130, COLORS.R, "красный центр")}
       ${side(166, 258, COLORS.B, "оранжевый центр")}
       ${side(28, 130, COLORS.L, "зеленый центр")}
-      <rect x="124" y="96" width="166" height="166" rx="18" fill="#eef3f7" stroke="${COLORS.ink}" stroke-width="5"/>
+      <rect x="124" y="96" width="166" height="166" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
       ${bottom.join("")}
       <text x="210" y="304" text-anchor="middle" class="svg-note">белые ребра снизу, боковые цвета совпадают с центрами</text>
     </svg>`;
@@ -799,7 +1013,7 @@ function renderCaseFinder(list) {
     PLL: "Верх уже желтый. Сначала ищи готовый блок, потом смотри на обмены.",
   }[activeStage];
   return `
-    <div class="case-finder">
+    <div class="case-finder compact-finder">
       <div class="finder-step">
         <span class="step-number">1</span>
         <div>
@@ -811,14 +1025,33 @@ function renderCaseFinder(list) {
           ${options.map((option) => `<button class="${state.finder === option.id ? "active" : ""}" data-finder="${option.id}"><span>${option.label}</span><small>${option.text}</small></button>`).join("")}
         </div>
       </div>
-      <div class="finder-step">
-        <span class="step-number">2</span>
-        <div>
-          <strong>Открой крупный разбор</strong>
-          <p>Смотри не на весь кубик, а на выделенные цвета и проверку результата.</p>
-        </div>
-        <p class="finder-mini-result"><strong>${list.length}</strong> подходящих случаев. Первый уже открыт слева.</p>
+      <p class="finder-result"><strong>${list.length}</strong> подходящих случаев. Открой карточку, чтобы увидеть крупную схему и объяснение.</p>
+    </div>`;
+}
+
+function renderF2LWizard() {
+  const groups = [
+    ["corner", "Где белый угол?", [["", "не знаю"], ["top", "сверху"], ["slot", "в слоте"]]],
+    ["white", "Куда смотрит белый?", [["", "не знаю"], ["up", "наверх"], ["side", "вбок"], ["slot", "внизу"]]],
+    ["edge", "Где ребро пары?", [["", "не знаю"], ["top", "сверху"], ["slot", "в слоте"]]],
+    ["pair", "Пара уже собрана?", [["", "не знаю"], ["ready", "да"], ["separate", "нет"], ["wrong", "неправильно"]]],
+    ["slot", "Какой слот собираешь?", [["", "любой"], ["right", "правый"], ["left", "левый"]]],
+  ];
+  return `
+    <div class="f2l-wizard">
+      <div class="wizard-intro">
+        <p class="eyebrow">Найти F2L-случай</p>
+        <h3>Ответь на 2–3 вопроса, и список сузится</h3>
+        <p>Если не уверен, оставь “не знаю”. Сайт не заставляет угадывать все сразу.</p>
       </div>
+      ${groups.map(([key, title, options]) => `
+        <div class="wizard-row">
+          <strong>${title}</strong>
+          <div class="wizard-options">
+            ${options.map(([value, label]) => `<button class="${state.f2lFilters[key] === value ? "active" : ""}" data-f2l-filter="${key}" data-f2l-value="${value}">${label}</button>`).join("")}
+          </div>
+        </div>`).join("")}
+      <button class="text-button reset-filters" data-reset-f2l>Сбросить выбор</button>
     </div>`;
 }
 
@@ -861,13 +1094,13 @@ function recognitionHint(item) {
 
 function renderCard(item) {
   return `
-    <article class="algo-card ${state.selectedId === item.id ? "selected" : ""}" data-id="${item.id}">
+    <article class="algo-card ${state.selectedId === item.id ? "selected" : ""}" id="card-${item.id}" data-id="${item.id}" data-open-case="${item.id}">
       <div class="card-top"><span class="stage-tag ${item.stage.toLowerCase()}">${item.stage} · ${item.group}</span></div>
       <h3>${item.name}</h3>
-      ${visualSvg(item)}
+      ${visualSvg(item, { compact: true, flat: item.stage === "F2L" })}
       <p>${item.note}</p>
       ${algorithmHtml(item)}
-      <div class="card-actions"><button class="study-button" data-study="${item.id}">Разобрать крупно</button><button class="copy-button" data-copy="${item.alg}">Копировать</button></div>
+      <div class="card-actions"><button class="study-button" data-open-case="${item.id}">Открыть разбор</button><button class="copy-button" data-copy="${item.alg}">Копировать</button></div>
     </article>`;
 }
 
@@ -875,18 +1108,12 @@ function renderAssembly() {
   selectFirstVisible();
   const info = stageInfo[state.filter] || stageInfo.Cross;
   const list = state.filter === "Cross" ? [] : filteredAlgorithms();
-  const selected = algorithms.find((item) => item.id === state.selectedId) || list[0] || algorithms[0];
   const stats = ["F2L", "OLL", "PLL"].map((stage) => `<span class="stat-pill">${stage}: ${algorithms.filter((item) => item.stage === stage).length}</span>`).join("");
   const stageBody = state.filter === "Cross" ? renderCrossGuide() : `
-      <div class="library-layout">
-        ${renderStudy(selected)}
-        <div class="cards-column">
-          ${renderCaseFinder(list)}
-          <div class="stats-row"><span class="stat-pill">Показано: ${list.length}</span>${stats}</div>
-          <div class="cards-heading"><h3>Похожие случаи</h3><p>Карточки ниже нужны для выбора. Учиться удобнее в крупном разборе слева.</p></div>
-          <div class="cards-grid">${list.map(renderCard).join("") || `<p class="empty-state">Ничего не найдено.</p>`}</div>
-        </div>
-      </div>`;
+      ${state.filter === "F2L" ? renderF2LWizard() : renderCaseFinder(list)}
+      <div class="stats-row"><span class="stat-pill">Показано: ${list.length}</span>${stats}</div>
+      <div class="cards-heading"><h3>${state.filter === "F2L" ? "Все F2L-варианты" : "Случаи для этого шага"}</h3><p>${state.filter === "F2L" ? "Три карточки в строку на широком экране. Нажми на случай, чтобы открыть полный разбор и вернуться назад к тому же месту." : "Открой карточку, чтобы увидеть крупную схему, формулу и распознавание."}</p></div>
+      <div class="cards-grid ${state.filter.toLowerCase()}-overview">${list.map(renderCard).join("") || `<p class="empty-state">Ничего не найдено.</p>`}</div>`;
   return `
     <section class="section" id="assembly">
       <div class="section-heading compact">
@@ -906,7 +1133,7 @@ function renderStarterSets() {
   ];
   return `
     <section class="section muted">
-      <div class="section-heading"><p class="eyebrow">Первые формулы</p><h2>Минимальный набор для старта</h2><p>Полный справочник не исчез: он в режиме “Формулы”. Здесь только то, что стоит открыть первым.</p></div>
+      <div class="section-heading"><p class="eyebrow">Первые формулы</p><h2>Минимальный набор для старта</h2><p>Полный справочник лежит в “Начать сборку”. Здесь только то, что стоит открыть первым.</p></div>
       ${groups.map(([title, text, list, filter]) => `
         <div class="starter-row">
           <div class="starter-heading">
@@ -945,7 +1172,7 @@ function renderTrainer() {
 }
 
 function renderSources() {
-  return `<section class="section sources"><div class="section-heading"><p class="eyebrow">Источники</p><h2>Формулы сверены по учебным базам</h2><p>OLL намеренно ограничен 7 OCLL-случаями после желтого креста.</p><p class="source-links"><a href="https://jperm.net/algs/pll" target="_blank" rel="noreferrer">J Perm PLL</a><a href="https://jperm.net/algs/2look/oll" target="_blank" rel="noreferrer">J Perm OLL</a><a href="https://www.speedsolving.com/wiki/index.php/PLL" target="_blank" rel="noreferrer">Speedsolving PLL</a><a href="https://www.rubiksplace.com/speedcubing/F2L-algorithms/" target="_blank" rel="noreferrer">Rubiksplace F2L</a></p></div></section>`;
+  return `<section class="section sources"><div class="section-heading"><p class="eyebrow">Источники</p><h2>Формулы сверены по учебным базам</h2><p>OLL намеренно ограничен 7 OCLL-случаями после желтого креста.</p><p class="source-links"><a href="https://jperm.net/3x3/moves" target="_blank" rel="noreferrer">J Perm Move Notation</a><a href="https://jperm.net/algs/pll" target="_blank" rel="noreferrer">J Perm PLL</a><a href="https://jperm.net/algs/2lookoll" target="_blank" rel="noreferrer">J Perm 2-Look OLL</a><a href="https://www.speedsolving.com/wiki/index.php/PLL" target="_blank" rel="noreferrer">Speedsolving PLL</a><a href="https://www.rubiksplace.com/speedcubing/F2L-algorithms/" target="_blank" rel="noreferrer">Rubiksplace F2L</a></p></div></section>`;
 }
 
 function render() {
@@ -953,6 +1180,10 @@ function render() {
   if (state.view === "home") content = renderHero();
   if (state.view === "notation") content = renderNotation(false);
   if (state.view === "assembly") content = renderAssembly();
+  if (state.view === "case") {
+    const item = algorithms.find((candidate) => candidate.id === state.detailId) || algorithms[0];
+    content = renderCaseDetail(item);
+  }
   app.innerHTML = renderHeader() + `<main>${content}${renderSources()}</main><footer class="site-footer"><p>Маршрут короткий: правильный крест, затем пары F2L, 7 OLL после желтого креста и PLL по блокам.</p></footer>`;
   const input = document.querySelector("#searchInput");
   if (input) {
@@ -980,23 +1211,56 @@ document.addEventListener("click", async (event) => {
   const filterButton = event.target.closest("[data-filter]");
   const levelButton = event.target.closest("[data-level]");
   const finderButton = event.target.closest("[data-finder]");
+  const f2lFilterButton = event.target.closest("[data-f2l-filter]");
+  const resetF2LButton = event.target.closest("[data-reset-f2l]");
   const filterJump = event.target.closest("[data-filter-jump]");
   const targetButton = event.target.closest("[data-target]");
   const studyButton = event.target.closest("[data-study]");
   const card = event.target.closest(".algo-card[data-id]");
+  const openCaseButton = event.target.closest("[data-open-case]");
+  const backButton = event.target.closest("[data-back-to-list]");
+  const themeButton = event.target.closest("[data-theme-toggle]");
   const copyButton = event.target.closest("[data-copy]");
 
   if (copyButton) {
+    event.stopPropagation();
     await navigator.clipboard.writeText(copyButton.dataset.copy);
     copyButton.textContent = "Скопировано";
     setTimeout(render, 800);
+    return;
+  }
+  if (themeButton) {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("cfop-theme", state.theme);
+    applyTheme();
+    render();
+    return;
+  }
+  if (backButton) {
+    const anchor = backButton.dataset.backToList;
+    state.view = "assembly";
+    render();
+    requestAnimationFrame(() => {
+      document.querySelector(`#card-${anchor}`)?.scrollIntoView({ block: "center" });
+    });
+    return;
+  }
+  if (openCaseButton || card) {
+    const id = openCaseButton?.dataset.openCase || card.dataset.id;
+    state.detailId = id;
+    state.selectedId = id;
+    state.returnAnchor = id;
+    jumpToTop();
+    state.view = "case";
+    render();
+    jumpToTop();
     return;
   }
   if (viewButton) {
     event.preventDefault();
     state.view = viewButton.dataset.view;
     render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    jumpToTop();
     return;
   }
   if (filterButton) {
@@ -1005,6 +1269,18 @@ document.addEventListener("click", async (event) => {
   }
   if (finderButton) {
     state.finder = finderButton.dataset.finder || "";
+    selectFirstVisible();
+    render();
+    return;
+  }
+  if (f2lFilterButton) {
+    state.f2lFilters[f2lFilterButton.dataset.f2lFilter] = f2lFilterButton.dataset.f2lValue || "";
+    selectFirstVisible();
+    render();
+    return;
+  }
+  if (resetF2LButton) {
+    resetF2LFilters();
     selectFirstVisible();
     render();
     return;
@@ -1022,12 +1298,6 @@ document.addEventListener("click", async (event) => {
   }
   if (targetButton) {
     document.querySelector(targetButton.dataset.target)?.scrollIntoView({ behavior: "smooth" });
-    return;
-  }
-  if (studyButton || card) {
-    state.selectedId = studyButton?.dataset.study || card.dataset.id;
-    render();
-    document.querySelector(".study-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
 });
