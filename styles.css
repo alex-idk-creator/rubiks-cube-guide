@@ -16,6 +16,10 @@
   --cube-muted: #d9e0e7;
   --cube-shell: #eef3f7;
   --cube-line: #202b36;
+  --badge-bg: #17202a;
+  --badge-ink: #ffffff;
+  --arrow-fill: #ffffff;
+  --arrow-outline: #111821;
 }
 
 :root[data-theme="dark"] {
@@ -36,6 +40,10 @@
   --cube-muted: #2a3642;
   --cube-shell: #18232d;
   --cube-line: #d8e3ec;
+  --badge-bg: #f3f7fa;
+  --badge-ink: #0e1319;
+  --arrow-fill: #ffffff;
+  --arrow-outline: #081018;
 }
 
 * {
@@ -450,10 +458,26 @@ button {
   margin-bottom: 10px;
   padding: 7px 10px;
   border-radius: 8px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
   font-size: 1.22rem;
   font-weight: 950;
+}
+
+.front-turn-arrow .arrow-outline {
+  fill: none;
+  stroke: var(--arrow-outline);
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.front-turn-arrow .arrow-line {
+  fill: none;
+  stroke: var(--arrow-fill);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .cube-svg,
@@ -767,6 +791,13 @@ button {
   padding: 9px 12px;
 }
 
+.search-box small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+  text-transform: none;
+}
+
 .segmented {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -837,6 +868,30 @@ button {
 
 .wizard-intro p:not(.eyebrow) {
   color: var(--muted);
+}
+
+.wizard-glossary {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 2px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.wizard-glossary summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.wizard-glossary span {
+  display: block;
+  padding-left: 14px;
+}
+
+.wizard-glossary b {
+  color: var(--ink);
 }
 
 .wizard-options {
@@ -1032,6 +1087,16 @@ button {
   width: fit-content;
 }
 
+.case-orientation {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .case-copy h2,
 .case-copy p,
 .case-section-heading h3 {
@@ -1105,29 +1170,6 @@ button {
 
 .recognition strong {
   color: var(--ink);
-}
-
-.case-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.case-facts span {
-  min-height: 52px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-
-.case-facts b {
-  display: block;
-  color: var(--ink);
-  font-size: 0.78rem;
-  text-transform: uppercase;
 }
 
 .action-guide {
@@ -1453,10 +1495,6 @@ button {
   }
 
   .action-guide {
-    grid-template-columns: 1fr;
-  }
-
-  .case-facts {
     grid-template-columns: 1fr;
   }
 
