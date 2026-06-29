@@ -744,8 +744,35 @@ button {
     width: 100%;
   }
 
+  .hero {
+    gap: 18px;
+    padding: 28px 16px 34px;
+  }
+
   .hero h2 {
-    font-size: clamp(2.25rem, 15vw, 3.8rem);
+    font-size: clamp(2rem, 11vw, 2.85rem);
+    line-height: 1;
+  }
+
+  .hero p:not(.eyebrow) {
+    margin-top: 14px;
+    font-size: 1rem;
+  }
+
+  .hero-actions {
+    margin-top: 18px;
+  }
+
+  .hero-actions .button {
+    width: 100%;
+  }
+
+  .hero-cube {
+    min-height: 230px;
+  }
+
+  .hero-cube .cube-svg {
+    max-width: min(260px, 92vw);
   }
 
   .notation-card {
