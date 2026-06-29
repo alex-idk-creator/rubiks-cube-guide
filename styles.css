@@ -654,7 +654,7 @@ button {
 .stage-tag.cross {
   width: fit-content;
   background: #f1f4f8;
-  color: var(--ink);
+  color: #17202a;
 }
 
 .library-tools {
@@ -1013,6 +1013,31 @@ button {
   max-width: 210px;
 }
 
+.mini-recognition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.mini-recognition span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mini-recognition span::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .algo-card.selected {
   border-color: var(--accent);
   box-shadow: 0 16px 34px rgba(15, 139, 141, 0.15);
@@ -1047,9 +1072,7 @@ button {
 }
 
 .back-button {
-  position: sticky;
-  top: 92px;
-  z-index: 20;
+  position: static;
   width: fit-content;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -1108,6 +1131,38 @@ button {
   color: var(--muted);
 }
 
+.recognition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recognition-grid article {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.recognition-grid p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.recognition-grid b {
+  color: var(--ink);
+}
+
+.f2l-recognition-svg,
+.slot-goal-svg {
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+  overflow: visible;
+}
+
 .timeline-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1156,6 +1211,10 @@ button {
 .study-button {
   background: var(--accent-soft);
   color: #0b6d6f;
+}
+
+:root[data-theme="dark"] .study-button {
+  color: #d8fbfb;
 }
 
 .recognition,
@@ -1372,6 +1431,7 @@ button {
 
   .f2l-wizard,
   .case-hero,
+  .recognition-grid,
   .timeline-grid {
     grid-template-columns: 1fr;
   }
