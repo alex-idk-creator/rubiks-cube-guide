@@ -745,12 +745,12 @@ button {
   }
 
   .hero {
-    gap: 18px;
-    padding: 28px 16px 34px;
+    gap: 12px;
+    padding: 22px 16px 28px;
   }
 
   .hero h2 {
-    font-size: clamp(2rem, 11vw, 2.85rem);
+    font-size: clamp(1.9rem, 10vw, 2.65rem);
     line-height: 1;
   }
 
@@ -768,11 +768,11 @@ button {
   }
 
   .hero-cube {
-    min-height: 230px;
+    min-height: 190px;
   }
 
   .hero-cube .cube-svg {
-    max-width: min(260px, 92vw);
+    max-width: min(220px, 86vw);
   }
 
   .notation-card {
