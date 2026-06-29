@@ -700,6 +700,7 @@ function renderCaseDetail(item) {
           <button class="copy-button" data-copy="${item.alg}">Копировать формулу</button>
         </div>
       </div>
+      ${renderF2LRecognitionBoard(item)}
       ${firstF2LTimeline(item)}
       ${renderActionGuide(item)}
     </section>`;
@@ -734,6 +735,129 @@ function f2lAttributes(item) {
     pair: visual.wrong ? "wrong" : visual.pair ? "ready" : "separate",
     slot: (visual.slot || "FR").includes("L") ? "left" : "right",
   };
+}
+
+function positionPhrase(value, kind = "corner") {
+  const map = {
+    UFR: "сверху спереди справа",
+    UFL: "сверху спереди слева",
+    UBR: "сверху сзади справа",
+    UBL: "сверху сзади слева",
+    UR: "сверху справа",
+    UL: "сверху слева",
+    UF: "сверху спереди",
+    UB: "сверху сзади",
+    U: "на верхнем слое, белым вверх",
+    FR: "в правом переднем слоте",
+    FL: "в левом переднем слоте",
+    BR: "в правом заднем слоте",
+    BL: "в левом заднем слоте",
+    none: "не показан",
+  };
+  return map[value] || (kind === "corner" ? "ищи белый угол" : "ищи ребро пары");
+}
+
+function f2lMiniFacts(item) {
+  if (item.stage !== "F2L") return "";
+  const visual = item.visual || {};
+  const attrs = f2lAttributes(item);
+  const corner = attrs.corner === "slot" ? "угол в слоте" : attrs.white === "up" ? "угол белым вверх" : "угол сверху";
+  const edge = attrs.edge === "slot" ? "ребро в слоте" : "ребро сверху";
+  const slot = (visual.slot || "FR").includes("L") ? "левый слот" : "правый слот";
+  return `
+    <p class="mini-recognition" aria-label="Короткое распознавание F2L-случая">
+      <span>${corner}</span>
+      <span>${edge}</span>
+      <span>${slot}</span>
+    </p>`;
+}
+
+function topPositionCell(position, fallback) {
+  const map = {
+    UBL: [0, 0], UB: [1, 0], UBR: [2, 0],
+    UL: [0, 1], U: [1, 1], UR: [2, 1],
+    UFL: [0, 2], UF: [1, 2], UFR: [2, 2],
+  };
+  return map[position] || fallback;
+}
+
+function f2lRecognitionSvg(item) {
+  const visual = item.visual || {};
+  const slot = visual.slot || "FR";
+  const colors = slotPalette(slot);
+  const cornerCell = topPositionCell(visual.corner || "UFR", [2, 2]);
+  const edgeCell = topPositionCell(visual.edge || "UR", [2, 1]);
+  const slotX = slot.includes("L") ? 54 : 194;
+  const topCell = (col, row) => {
+    const x = 54 + col * 70;
+    const y = 48 + row * 58;
+    return `<rect x="${x}" y="${y}" width="58" height="48" rx="8" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="2"/>`;
+  };
+  const marker = (cell, kind) => {
+    const [col, row] = cell;
+    const x = 54 + col * 70 + 8;
+    const y = 48 + row * 58 + 8;
+    if (kind === "corner") {
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="42" height="32" rx="7" fill="var(--surface)" stroke="var(--cube-line)" stroke-width="3"/>
+          <rect x="${x + 4}" y="${y + 4}" width="34" height="8" rx="3" fill="${colors.down}"/>
+          <rect x="${x + 4}" y="${y + 15}" width="15" height="13" rx="3" fill="${colors.front}"/>
+          <rect x="${x + 23}" y="${y + 15}" width="15" height="13" rx="3" fill="${colors.side}"/>
+        </g>`;
+    }
+    return `
+      <g>
+        <rect x="${x + 1}" y="${y + 5}" width="40" height="24" rx="7" fill="var(--surface)" stroke="var(--cube-line)" stroke-width="3"/>
+        <rect x="${x + 6}" y="${y + 10}" width="14" height="14" rx="3" fill="${colors.front}"/>
+        <rect x="${x + 23}" y="${y + 10}" width="14" height="14" rx="3" fill="${colors.side}"/>
+      </g>`;
+  };
+  return `
+    <svg class="f2l-recognition-svg" viewBox="0 0 330 252" role="img" aria-label="Схема распознавания F2L: угол, ребро и слот">
+      <text x="165" y="24" text-anchor="middle" class="svg-note">вид сверху: найди угол и ребро</text>
+      ${Array.from({ length: 9 }).map((_, index) => topCell(index % 3, Math.floor(index / 3))).join("")}
+      <rect x="${slotX}" y="164" width="58" height="48" rx="8" fill="none" stroke="var(--accent)" stroke-width="5"/>
+      ${marker(edgeCell, "edge")}
+      ${marker(cornerCell, "corner")}
+      <text x="165" y="240" text-anchor="middle" class="svg-note">цветные наклейки сравни со своим кубиком</text>
+    </svg>`;
+}
+
+function slotGoalSvg(item) {
+  const visual = item.visual || {};
+  const colors = slotPalette(visual.slot || "FR");
+  return `
+    <svg class="slot-goal-svg" viewBox="0 0 330 180" role="img" aria-label="Куда вставляется F2L-пара">
+      <text x="165" y="24" text-anchor="middle" class="svg-note">цель: пара уходит между центрами</text>
+      <rect x="66" y="54" width="74" height="48" rx="9" fill="${colors.front}" stroke="var(--cube-line)" stroke-width="4"/>
+      <rect x="190" y="54" width="74" height="48" rx="9" fill="${colors.side}" stroke="var(--cube-line)" stroke-width="4"/>
+      <rect x="128" y="110" width="74" height="42" rx="9" fill="${colors.down}" stroke="var(--cube-line)" stroke-width="4"/>
+      <path d="M142 78 L188 78" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M165 101 L165 118" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/>
+    </svg>`;
+}
+
+function renderF2LRecognitionBoard(item) {
+  if (item.stage !== "F2L") return "";
+  const visual = item.visual || {};
+  return `
+    <section class="case-section recognition-board">
+      <div class="case-section-heading">
+        <p class="eyebrow">Как распознать</p>
+        <h3>Сначала найди элементы, потом читай формулу</h3>
+      </div>
+      <div class="recognition-grid">
+        <article>
+          ${f2lRecognitionSvg(item)}
+          <p><b>Угол:</b> ${positionPhrase(visual.corner || "UFR", "corner")}. <b>Ребро:</b> ${positionPhrase(visual.edge || "UR", "edge")}.</p>
+        </article>
+        <article>
+          ${slotGoalSvg(item)}
+          <p><b>Слот:</b> ${positionPhrase(visual.slot || "FR", "slot")}. Цвета пары должны совпасть с двумя центрами слота.</p>
+        </article>
+      </div>
+    </section>`;
 }
 
 function resetF2LFilters() {
@@ -1055,6 +1179,7 @@ function renderCard(item) {
       <div class="card-top"><span class="stage-tag ${item.stage.toLowerCase()}">${item.stage} · ${item.group}</span></div>
       <h3>${item.name}</h3>
       ${visualSvg(item, { compact: true, flat: item.stage === "F2L" })}
+      ${f2lMiniFacts(item)}
       <p>${item.note}</p>
       ${algorithmHtml(item)}
       <div class="card-actions"><button class="study-button" data-open-case="${item.id}">Открыть разбор</button><button class="copy-button" data-copy="${item.alg}">Копировать</button></div>
