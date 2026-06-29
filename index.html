@@ -37,9 +37,9 @@
           <p class="eyebrow">Сначала понять, потом ускоряться</p>
           <h2 id="hero-title">Собирай по CFOP без хаоса в формулах</h2>
           <p>
-            Здесь собраны движения, логика этапов, F2L-пары, 7 OLL-случаев после уже
-            собранного желтого креста и полный PLL. Можно искать, отмечать избранное,
-            копировать алгоритмы и гонять случайные случаи.
+            Здесь формулы показаны не только буквами: кубик повернут углом, серым
+            скрыто все лишнее, а важные элементы выделены. Сначала смотри на детали,
+            потом повторяй алгоритм.
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#notation">Начать с букв</a>
@@ -67,8 +67,8 @@
           <h2 id="notation-title">Что означают буквы в формулах</h2>
           <p>
             Держи кубик белым вниз и желтым вверх, если ты собираешь классическим
-            способом. Буква без штриха поворачивает грань по часовой стрелке, если
-            смотреть прямо на эту грань.
+            способом. В каждой карточке ярко выделена грань или слой, который двигается.
+            Стрелка показывает направление для обычного хода без штриха.
           </p>
         </div>
         <div class="notation-grid" id="notationGrid"></div>
@@ -101,6 +101,24 @@
             <p>Верх уже желтый. Переставляешь элементы местами и заканчиваешь сборку.</p>
           </article>
         </div>
+        <div class="learning-path" aria-label="Рекомендуемый порядок изучения">
+          <a href="#notation">
+            <strong>Буквы</strong>
+            <span>Сначала R, U, F и штрих</span>
+          </a>
+          <a href="#library" data-jump-filter="F2L">
+            <strong>F2L база</strong>
+            <span>Начни с первых вставок и триггеров</span>
+          </a>
+          <a href="#library" data-jump-filter="OLL">
+            <strong>7 OLL</strong>
+            <span>Только случаи после желтого креста</span>
+          </a>
+          <a href="#library" data-jump-filter="PLL">
+            <strong>PLL старт</strong>
+            <span>H, U, T, J, затем остальные</span>
+          </a>
+        </div>
       </section>
 
       <section class="section" id="library" aria-labelledby="library-title">
@@ -124,7 +142,12 @@
           </div>
         </div>
         <div class="stats-row" id="statsRow"></div>
-        <div class="cards-grid" id="algorithmGrid"></div>
+        <div class="library-layout">
+          <aside class="study-panel" id="study" aria-label="Крупный разбор выбранного случая">
+            <div id="studyPanel"></div>
+          </aside>
+          <div class="cards-grid" id="algorithmGrid"></div>
+        </div>
       </section>
 
       <section class="section muted trainer-section" id="trainer" aria-labelledby="trainer-title">
