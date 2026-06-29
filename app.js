@@ -144,7 +144,7 @@ const state = {
   level: "start",
   query: "",
   selectedId: "f2l-1",
-  showAnswer: true,
+  showAnswer: false,
   favorites: new Set(JSON.parse(localStorage.getItem("cfop-favorites") || "[]")),
 };
 
@@ -614,6 +614,7 @@ document.addEventListener("click", async (event) => {
   if (viewButton) {
     event.preventDefault();
     state.view = viewButton.dataset.view;
+    if (state.view === "trainer") state.showAnswer = false;
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
