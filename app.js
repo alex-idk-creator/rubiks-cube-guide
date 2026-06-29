@@ -15,22 +15,22 @@ const COLORS = {
 };
 
 const notation = [
-  { move: "R", title: "Правая грань", face: "R", dir: "cw", text: "Крути правую грань вверх от себя. Это один из главных ходов CFOP." },
-  { move: "R'", title: "Правая обратно", face: "R", dir: "ccw", text: "Та же правая грань, но в обратную сторону: вниз к себе." },
-  { move: "L", title: "Левая грань", face: "L", dir: "cw", rotate: "left", text: "Левую грань удобнее представить, слегка повернув куб в руках." },
-  { move: "L'", title: "Левая обратно", face: "L", dir: "ccw", rotate: "left", text: "Обратный ход левой грани. Смотри на левую сторону кубика." },
-  { move: "U", title: "Верхняя грань", face: "U", dir: "cw", text: "Крути верхний слой по часовой стрелке, если смотришь сверху." },
-  { move: "U'", title: "Верхняя обратно", face: "U", dir: "ccw", text: "Верхний слой в обратную сторону. Часто делается указательным пальцем." },
-  { move: "F", title: "Передняя грань", face: "F", dir: "cw", text: "Передняя грань смотрит на тебя. Не путай ее с правой." },
-  { move: "F'", title: "Передняя обратно", face: "F", dir: "ccw", text: "Передняя грань против обычного направления." },
-  { move: "D", title: "Нижняя грань", face: "D", dir: "cw", rotate: "down", text: "Нижний слой. На схеме он показан как подсказка снизу." },
-  { move: "D'", title: "Нижняя обратно", face: "D", dir: "ccw", rotate: "down", text: "Нижний слой в обратную сторону. Встречается в некоторых PLL." },
-  { move: "B", title: "Задняя грань", face: "B", dir: "cw", rotate: "back", text: "Заднюю грань проще понять, если мысленно повернуть куб задом к себе." },
-  { move: "B'", title: "Задняя обратно", face: "B", dir: "ccw", rotate: "back", text: "Задняя грань в обратную сторону." },
-  { move: "R2", title: "Двойной ход", face: "R", dir: "double", text: "R2 значит повернуть правую грань на 180 градусов." },
+  { move: "R", title: "Правая грань", face: "R", dir: "cw", text: "Передняя грань смотрит на тебя. Крути правый слой вверх по стрелке." },
+  { move: "R'", title: "Правая обратно", face: "R", dir: "ccw", text: "Та же правая грань, но стрелка идет вниз: это обратный ход." },
+  { move: "L", title: "Левая грань", face: "L", dir: "cw", text: "Крути левый слой по стрелке. На фронтальной схеме он слева." },
+  { move: "L'", title: "Левая обратно", face: "L", dir: "ccw", text: "Левый слой в обратную сторону. Отличие видно только по стрелке." },
+  { move: "U", title: "Верхняя грань", face: "U", dir: "cw", text: "Крути верхний слой по стрелке, не меняя хват кубика." },
+  { move: "U'", title: "Верхняя обратно", face: "U", dir: "ccw", text: "Верхний слой идет в обратную сторону относительно U." },
+  { move: "F", title: "Передняя грань", face: "F", dir: "cw", text: "Крути всю переднюю грань, которая смотрит прямо на тебя." },
+  { move: "F'", title: "Передняя обратно", face: "F", dir: "ccw", text: "Та же передняя грань, только вращение в обратную сторону." },
+  { move: "D", title: "Нижняя грань", face: "D", dir: "cw", text: "Крути нижний слой по стрелке. Куб держи так же, белый снизу." },
+  { move: "D'", title: "Нижняя обратно", face: "D", dir: "ccw", text: "Нижний слой обратно. Встречается в некоторых PLL." },
+  { move: "B", title: "Задняя грань", face: "B", dir: "cw", text: "Задняя грань находится за кубиком. Пунктир показывает, что слой сзади." },
+  { move: "B'", title: "Задняя обратно", face: "B", dir: "ccw", text: "Задняя грань в обратную сторону. Смотри на пунктирный задний слой." },
+  { move: "R2", title: "Двойной ход", face: "R", dir: "double", text: "R2 значит повернуть правую грань два раза, на 180 градусов." },
   { move: "U2", title: "Верх на 180", face: "U", dir: "double", text: "U2 — верхний слой на пол-оборота. Направление неважно." },
-  { move: "M", title: "Средний слой", face: "M", dir: "ccw", text: "Средний вертикальный слой между L и R. Нужен в H-perm и Z-perm." },
-  { move: "x y z", title: "Поворот куба", face: "cube", dir: "turn", text: "Поворачивается весь кубик в руках, а не отдельная грань." },
+  { move: "M", title: "Средний слой", face: "M", dir: "ccw", text: "Крути средний вертикальный слой между левой и правой гранью." },
+  { move: "x y z", title: "Поворот куба", face: "cube", dir: "turn", text: "Это поворот всего кубика в руках, а не отдельной грани." },
 ];
 
 const lessons = [
@@ -63,6 +63,28 @@ const lessons = [
     filter: "PLL",
   },
 ];
+
+const finderOptions = {
+  F2L: [
+    { id: "f2l-ready", label: "Пара уже сверху", text: "угол и ребро стоят вместе", match: (item) => item.stage === "F2L" && item.visual?.pair },
+    { id: "f2l-white-up", label: "Белый цвет сверху", text: "угол смотрит белым наверх", match: (item) => item.stage === "F2L" && (item.group.includes("Белый вверх") || item.name.includes("Угол белым вверх")) },
+    { id: "f2l-edge-slot", label: "Ребро в слоте", text: "ребро застряло внизу", match: (item) => item.stage === "F2L" && (item.name.includes("Ребро в слоте") || item.group.includes("Ребро внизу")) },
+    { id: "f2l-corner-slot", label: "Угол в слоте", text: "угол уже сидит внизу", match: (item) => item.stage === "F2L" && (item.name.includes("Угол в слоте") || item.group.includes("Угол внизу")) },
+    { id: "f2l-wrong-pair", label: "Склеено неправильно", text: "пара есть, но цвета не совпали", match: (item) => item.stage === "F2L" && item.visual?.wrong },
+  ],
+  OLL: [
+    { id: "oll-one", label: "Один угол желтый", text: "похоже на Sune", match: (item) => item.stage === "OLL" && (item.name.includes("Sune")) },
+    { id: "oll-none", label: "Нет готовых углов", text: "H или Pi", match: (item) => item.stage === "OLL" && ["H", "Pi"].includes(item.name) },
+    { id: "oll-headlights", label: "Есть фары", text: "две желтые сбоку рядом", match: (item) => item.stage === "OLL" && item.name.includes("Headlights") },
+    { id: "oll-diagonal", label: "Диагональ", text: "готовые углы по диагонали", match: (item) => item.stage === "OLL" && ["Chameleon", "Bowtie"].includes(item.name) },
+  ],
+  PLL: [
+    { id: "pll-edges", label: "Только ребра", text: "углы уже стоят правильно", match: (item) => item.stage === "PLL" && item.group.includes("Только ребра") },
+    { id: "pll-block", label: "Есть готовый блок", text: "собранная сторона или пара", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).some((block) => !["none", "corners", "edges"].includes(block)) },
+    { id: "pll-corners", label: "Проблема с углами", text: "ребра не главное", match: (item) => item.stage === "PLL" && item.group.includes("Углы") },
+    { id: "pll-no-block", label: "Блоков нет", text: "диагональные случаи", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("none") },
+  ],
+};
 
 const algorithms = [
   { id: "f2l-1", stage: "F2L", level: "start", name: "Правая вставка", group: "База", alg: "U R U' R'", note: "Готовая пара сверху. Поставь ее над правым передним слотом и вставь.", visual: { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true } },
@@ -139,10 +161,11 @@ const algorithms = [
 ];
 
 const state = {
-  view: "learn",
+  view: "library",
   filter: "all",
   level: "start",
   query: "",
+  finder: "",
   selectedId: "f2l-1",
   showAnswer: false,
   favorites: new Set(JSON.parse(localStorage.getItem("cfop-favorites") || "[]")),
@@ -217,29 +240,89 @@ function cubeSvg({ active = [], arrowFace = null, dir = "cw", labels = [], piece
       </g>
       ${pieces.join("")}
       ${arrowFace ? arrowPath(arrowFace, dir) : ""}
-      ${labels.map((label) => `<text x="${label.x}" y="${label.y}" class="svg-note">${label.text}</text>`).join("")}
+      ${labels.map((label) => `<text x="${label.x}" y="${label.y}" text-anchor="${label.anchor || "middle"}" class="svg-note">${label.text}</text>`).join("")}
     </svg>
   `;
 }
 
+function frontCell(row, col, fill, active = false) {
+  const size = 52;
+  const gap = 4;
+  const x = 88 + col * (size + gap);
+  const y = 54 + row * (size + gap);
+  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${COLORS.line}" stroke-width="${active ? 4 : 2}"/>`;
+}
+
+function frontLayerCells(face) {
+  if (face === "R") return [[0, 2], [1, 2], [2, 2]];
+  if (face === "L") return [[0, 0], [1, 0], [2, 0]];
+  if (face === "U") return [[0, 0], [0, 1], [0, 2]];
+  if (face === "D") return [[2, 0], [2, 1], [2, 2]];
+  if (face === "M") return [[0, 1], [1, 1], [2, 1]];
+  return [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
+}
+
+function frontArrow(face, dir) {
+  const marker = `marker-end="url(#frontArrow)"`;
+  const line = `fill="none" stroke="${COLORS.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" ${marker}`;
+  const reverse = dir === "ccw";
+  if (dir === "double") return `<path d="M278 82 L278 214" ${line}/><path d="M54 214 L54 82" ${line}/><text x="166" y="250" text-anchor="middle" class="svg-label">180°</text>`;
+  if (face === "R") return reverse ? `<path d="M274 78 L274 214" ${line}/>` : `<path d="M274 214 L274 78" ${line}/>`;
+  if (face === "L") return reverse ? `<path d="M58 214 L58 78" ${line}/>` : `<path d="M58 78 L58 214" ${line}/>`;
+  if (face === "U") return reverse ? `<path d="M248 34 L84 34" ${line}/>` : `<path d="M84 34 L248 34" ${line}/>`;
+  if (face === "D") return reverse ? `<path d="M84 242 L248 242" ${line}/>` : `<path d="M248 242 L84 242" ${line}/>`;
+  if (face === "M") return `<path d="M166 78 L166 214" ${line}/>`;
+  if (face === "cube") return `<path d="M64 250 C38 178 54 78 124 40" ${line}/><path d="M268 34 C300 112 278 212 206 250" ${line}/>`;
+  return reverse
+    ? `<path d="M220 76 C258 126 244 194 188 218 C138 240 76 212 60 154" ${line}/>`
+    : `<path d="M60 154 C76 96 138 68 188 90 C244 114 258 182 220 232" ${line}/>`;
+}
+
 function notationSvg(item) {
-  const visibleFace = item.face === "L" ? "F" : item.face === "B" ? "R" : item.face === "D" ? "F" : item.face === "M" ? "R" : item.face === "cube" ? null : item.face;
-  const labels = [];
-  const colorOverrides = {};
-  if (item.face === "L") colorOverrides.F = COLORS.L;
-  if (item.face === "B") colorOverrides.R = COLORS.B;
-  if (item.face === "D") colorOverrides.F = COLORS.D;
-  if (item.face === "M") colorOverrides.R = COLORS.slot;
-  if (item.rotate) labels.push({ x: 165, y: 300, text: item.rotate === "left" ? "для L поверни куб в руках" : item.rotate === "back" ? "задняя грань показана подсказкой" : "нижний слой под кубом" });
-  if (item.face === "M") labels.push({ x: 112, y: 300, text: "средний слой" });
-  return cubeSvg({
-    active: visibleFace ? [visibleFace] : [],
-    arrowFace: visibleFace || "U",
-    dir: item.dir,
-    labels,
-    colorOverrides,
-    title: `Ход ${item.move}`,
-  });
+  const colorByFace = {
+    R: COLORS.R,
+    L: COLORS.L,
+    U: COLORS.U,
+    D: COLORS.D,
+    F: COLORS.F,
+    B: COLORS.B,
+    M: COLORS.slot,
+    cube: COLORS.accent || COLORS.slot,
+  };
+  const face = item.face;
+  const activeCells = new Set(frontLayerCells(face).map(([row, col]) => `${row}${col}`));
+  const highlight = colorByFace[face] || COLORS.F;
+  const faceLabel = {
+    R: "правая грань",
+    L: "левая грань",
+    U: "верхний слой",
+    D: "нижний слой",
+    F: "передняя грань",
+    B: "задняя грань",
+    M: "средний слой",
+    cube: "весь кубик",
+  }[face];
+  return `
+    <svg class="notation-svg" viewBox="0 0 332 286" role="img" aria-label="Ход ${item.move}: ${faceLabel}">
+      <defs>
+        <marker id="frontArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="${COLORS.ink}"></path>
+        </marker>
+      </defs>
+      <rect x="72" y="38" width="188" height="188" rx="18" fill="#eef3f7" stroke="${COLORS.ink}" stroke-width="5"/>
+      ${face === "B" ? `<rect x="62" y="28" width="208" height="208" rx="22" fill="none" stroke="${COLORS.B}" stroke-width="7" stroke-dasharray="9 8" opacity=".9"/>` : ""}
+      ${face === "cube" ? `<rect x="58" y="24" width="216" height="216" rx="24" fill="rgba(15,139,141,.08)" stroke="${COLORS.slot}" stroke-width="6"/>` : ""}
+      ${Array.from({ length: 9 }).map((_, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        const active = activeCells.has(`${row}${col}`);
+        return frontCell(row, col, active ? highlight : COLORS.F, active || face === "F" || face === "cube");
+      }).join("")}
+      ${frontArrow(face, item.dir)}
+      <text x="166" y="20" text-anchor="middle" class="svg-note">передняя грань смотрит на тебя</text>
+      <text x="166" y="274" text-anchor="middle" class="svg-note">${faceLabel}: ${item.dir === "ccw" ? "обратно" : item.dir === "double" ? "два раза" : "по стрелке"}</text>
+    </svg>
+  `;
 }
 
 const pointMap = {
@@ -248,10 +331,32 @@ const pointMap = {
   FR: [224, 188], FL: [82, 188], F: [150, 190], BR: [252, 116], BL: [48, 116],
 };
 
-function piece(kind, at, label, color) {
+function slotPalette(slot = "FR") {
+  const side = slot.includes("L") ? COLORS.L : COLORS.R;
+  return { down: COLORS.D, front: COLORS.F, side };
+}
+
+function stickerPiece(kind, at, slot, wrong = false) {
   const [x, y] = pointMap[at] || pointMap.U;
-  const shape = kind === "corner" ? `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="8"` : `<rect x="${x - 22}" y="${y - 13}" width="44" height="26" rx="7"`;
-  return `${shape} fill="${color}" stroke="${COLORS.ink}" stroke-width="4"/><text x="${x}" y="${y + 5}" text-anchor="middle" class="piece-label">${label}</text>`;
+  const colors = slotPalette(slot);
+  const stroke = wrong ? COLORS.corner : COLORS.ink;
+  if (kind === "corner") {
+    return `
+      <g class="sticker-piece">
+        <rect x="${x - 26}" y="${y - 26}" width="52" height="52" rx="10" fill="#fff" stroke="${stroke}" stroke-width="4"/>
+        <rect x="${x - 20}" y="${y - 20}" width="40" height="14" rx="4" fill="${colors.down}" stroke="${COLORS.line}" stroke-width="1"/>
+        <rect x="${x - 20}" y="${y - 2}" width="18" height="22" rx="4" fill="${colors.front}" stroke="${COLORS.line}" stroke-width="1"/>
+        <rect x="${x + 2}" y="${y - 2}" width="18" height="22" rx="4" fill="${colors.side}" stroke="${COLORS.line}" stroke-width="1"/>
+        <text x="${x}" y="${y + 41}" text-anchor="middle" class="piece-label dark">угол</text>
+      </g>`;
+  }
+  return `
+    <g class="sticker-piece">
+      <rect x="${x - 28}" y="${y - 20}" width="56" height="40" rx="10" fill="#fff" stroke="${stroke}" stroke-width="4"/>
+      <rect x="${x - 21}" y="${y - 13}" width="19" height="26" rx="4" fill="${colors.front}" stroke="${COLORS.line}" stroke-width="1"/>
+      <rect x="${x + 2}" y="${y - 13}" width="19" height="26" rx="4" fill="${colors.side}" stroke="${COLORS.line}" stroke-width="1"/>
+      <text x="${x}" y="${y + 36}" text-anchor="middle" class="piece-label dark">ребро</text>
+    </g>`;
 }
 
 function f2lSvg(visual) {
@@ -260,10 +365,10 @@ function f2lSvg(visual) {
   const pieces = [
     `<rect x="${slotPoint[0] - 28}" y="${slotPoint[1] - 28}" width="56" height="56" rx="10" fill="rgba(15,139,141,.16)" stroke="${COLORS.slot}" stroke-width="4" stroke-dasharray="7 5"/>`,
   ];
-  if (visual.corner !== "none") pieces.push(piece("corner", visual.corner || "UFR", "У", visual.wrong ? COLORS.corner : COLORS.pair));
-  if (visual.edge !== "none") pieces.push(piece("edge", visual.edge || "UR", "Р", visual.wrong ? COLORS.edge : COLORS.pair));
-  const labels = [{ x: 98, y: 300, text: "У = угол, Р = ребро, пунктир = слот" }];
-  return cubeSvg({ active: [], pieces, labels, title: "F2L: угол, ребро и слот" });
+  if (visual.corner !== "none") pieces.push(stickerPiece("corner", visual.corner || "UFR", slot, visual.wrong));
+  if (visual.edge !== "none") pieces.push(stickerPiece("edge", visual.edge || "UR", slot, visual.wrong));
+  const labels = [{ x: 165, y: 300, text: "цветные угол + ребро + слот" }];
+  return cubeSvg({ active: [], pieces, labels, title: "F2L: цветной угол, ребро и слот" });
 }
 
 function ollSvg(visual) {
@@ -280,7 +385,7 @@ function ollSvg(visual) {
   return cubeSvg({
     active,
     pieces: sideMarks,
-    labels: [{ x: 80, y: 300, text: visual.hold ? `держи: ${visual.hold}` : "желтый крест уже готов" }],
+    labels: [{ x: 165, y: 300, text: "крест готов; смотри углы" }],
     title: "OLL после желтого креста",
   });
 }
@@ -294,7 +399,7 @@ function pllSvg(visual) {
   });
   const arrow = visual.arrows === "cw" || visual.arrows === "cycle" ? "↻" : visual.arrows === "ccw" ? "↺" : visual.arrows === "diagonal" ? "⤫" : visual.arrows === "cross" ? "↕" : "⇄";
   pieces.push(`<circle cx="150" cy="160" r="50" fill="rgba(255,255,255,.82)" stroke="${COLORS.ink}" stroke-width="4"/><text x="150" y="174" text-anchor="middle" class="pll-arrow">${arrow}</text>`);
-  const labels = [{ x: 76, y: 300, text: "верх уже желтый; смотри на боковые блоки" }];
+  const labels = [{ x: 165, y: 300, text: "ищи блоки и обмены" }];
   return cubeSvg({ active: ["U"], pieces, labels, title: "PLL распознавание" });
 }
 
@@ -306,6 +411,105 @@ function visualSvg(item) {
 
 function algorithmHtml(item, hidden = false) {
   return `<div class="algorithm ${hidden ? "hidden-alg" : ""}">${tokens(item.alg).map((token) => `<span class="token">${token}</span>`).join("")}</div>`;
+}
+
+function moveMeaning(token) {
+  const clean = token.replace(/[()]/g, "");
+  const map = {
+    R: "правая грань вверх",
+    "R'": "правая грань вниз",
+    R2: "правая грань два раза",
+    L: "левая грань вниз",
+    "L'": "левая грань вверх",
+    L2: "левая грань два раза",
+    U: "верхний слой в сторону стрелки",
+    "U'": "верхний слой обратно",
+    U2: "верхний слой два раза",
+    F: "передняя грань по стрелке",
+    "F'": "передняя грань обратно",
+    F2: "передняя грань два раза",
+    D: "нижний слой по стрелке",
+    "D'": "нижний слой обратно",
+    D2: "нижний слой два раза",
+    M: "средний слой вниз",
+    "M'": "средний слой вверх",
+    M2: "средний слой два раза",
+    x: "поверни весь куб",
+    "x'": "поверни весь куб обратно",
+    y: "поверни весь куб по U",
+    "y'": "поверни весь куб обратно",
+    r: "правая широкая грань",
+    "r'": "правая широкая обратно",
+    d: "нижние два слоя",
+    "d'": "нижние два слоя обратно",
+  };
+  return map[clean] || "сделай ход как в разделе Буквы";
+}
+
+function guideFor(item) {
+  if (item.id === "f2l-1") {
+    return {
+      before: "Найди готовую пару: угол с белой, синей и красной наклейкой должен стоять рядом с ребром синее-красное.",
+      hold: "Держи белый низом, синий спереди, красный справа. Пара должна быть над правым передним слотом.",
+      steps: [
+        "U: уведи пару по верхнему слою, чтобы освободить правый слот.",
+        "R: подними правую грань и открой место для пары.",
+        "U': верни пару над открытый слот.",
+        "R': опусти правую грань обратно, пара зайдет в слот.",
+      ],
+      check: "После формулы белая наклейка угла смотрит вниз, а синий и красный цвета совпадают с центрами.",
+    };
+  }
+  if (item.stage === "F2L") {
+    return {
+      before: "Найди только два элемента: белый угол и подходящее к нему ребро без белого цвета.",
+      hold: "Поставь нужный слот спереди. Для правого слота держи боковой цвет справа, для левого — слева.",
+      steps: [
+        "Сначала выведи угол и ребро в верхний слой, если один из них застрял снизу.",
+        "Собери их в пару: белый цвет должен смотреть так, чтобы пара могла зайти в слот.",
+        "Поставь пару над пунктирным слотом и выполни формулу маленькими кусками.",
+      ],
+      check: "Пара считается готовой, если белый ушел вниз, а боковые цвета совпали с центрами.",
+    };
+  }
+  if (item.stage === "OLL") {
+    return {
+      before: "Желтый крест уже собран. Сравни только углы сверху и желтые наклейки на боках.",
+      hold: item.visual?.hold ? `Держи случай так: ${item.visual.hold}.` : "Поверни верхний слой, пока рисунок совпадет со схемой.",
+      steps: [
+        "Не обращай внимания на нижние два слоя: здесь решается только ориентация верхних углов.",
+        "Сделай формулу одним ритмом, не меняя хват.",
+        "Если верх не стал полностью желтым, значит случай был повернут не той стороной.",
+      ],
+      check: "После формулы вся верхняя грань должна стать желтой.",
+    };
+  }
+  return {
+    before: "Верх уже полностью желтый. Теперь смотри на боковые цвета верхнего слоя.",
+    hold: "Поверни куб так, чтобы готовый блок на схеме стоял в том же месте. Если блока нет, ориентируйся по стрелкам обмена.",
+    steps: [
+      "Найди готовые блоки: совпавшие угол + ребро на одной стороне.",
+      "Поставь блок как на схеме, затем делай формулу без остановок.",
+      "После формулы проверь боковые стороны, а не верх: верх и так остается желтым.",
+    ],
+    check: "PLL выполнен правильно, если все четыре боковые стороны верхнего слоя совпали по цветам.",
+  };
+}
+
+function renderActionGuide(item) {
+  const guide = guideFor(item);
+  const moveTokens = tokens(item.alg).slice(0, 12);
+  return `
+    <div class="action-guide">
+      <div class="guide-block"><span>1</span><strong>Что найти</strong><p>${guide.before}</p></div>
+      <div class="guide-block"><span>2</span><strong>Как держать</strong><p>${guide.hold}</p></div>
+      <div class="guide-block wide"><span>3</span><strong>Что делать</strong><ol>${guide.steps.map((step) => `<li>${step}</li>`).join("")}</ol></div>
+      <div class="guide-block"><span>4</span><strong>Проверка</strong><p>${guide.check}</p></div>
+      <div class="move-translation">
+        <strong>Перевод первых ходов</strong>
+        <div>${moveTokens.map((token) => `<span><b>${token}</b>${moveMeaning(token)}</span>`).join("")}</div>
+      </div>
+    </div>`;
 }
 
 function levelsForStage(stage) {
@@ -328,11 +532,13 @@ function levelsForStage(stage) {
 function filteredAlgorithms() {
   const query = state.query.trim().toLowerCase();
   const allowedLevels = state.level === "all" ? ["start", "more", "all"] : state.level === "more" ? ["start", "more"] : ["start"];
+  const finderOption = Object.values(finderOptions).flat().find((option) => option.id === state.finder);
   return algorithms.filter((item) => {
     const stageOk = state.filter === "all" || item.stage === state.filter || (state.filter === "favorite" && state.favorites.has(item.id));
     const levelOk = state.filter === "all" || state.filter === "favorite" || allowedLevels.includes(item.level);
+    const finderOk = !finderOption || finderOption.match(item);
     const haystack = `${item.name} ${item.stage} ${item.group} ${item.alg} ${item.note}`.toLowerCase();
-    return stageOk && levelOk && (!query || haystack.includes(query));
+    return stageOk && levelOk && finderOk && (!query || haystack.includes(query));
   });
 }
 
@@ -345,6 +551,7 @@ function setFilter(filter) {
   state.filter = filter;
   state.level = filter === "PLL" || filter === "F2L" || filter === "OLL" ? "start" : "all";
   state.query = "";
+  state.finder = "";
   selectFirstVisible();
   render();
 }
@@ -352,15 +559,15 @@ function setFilter(filter) {
 function renderHeader() {
   return `
     <header class="app-header">
-      <a class="brand-block" href="#top" data-view="learn">
+      <a class="brand-block" href="#library" data-view="library">
         <div class="cube-mark" aria-hidden="true">${Array.from({ length: 9 }).map(() => "<span></span>").join("")}</div>
         <div><p class="eyebrow">Метод Фридрих / CFOP</p><h1>Учебник по кубику Рубика</h1></div>
       </a>
       <nav class="top-nav" aria-label="Главные режимы">
-        <button class="${state.view === "learn" ? "active" : ""}" data-view="learn">Учусь</button>
-        <button class="${state.view === "library" ? "active" : ""}" data-view="library">Формулы</button>
-        <button class="${state.view === "trainer" ? "active" : ""}" data-view="trainer">Тренировка</button>
+        <button class="${state.view === "library" ? "active" : ""}" data-view="library">Найти случай</button>
         <button class="${state.view === "notation" ? "active" : ""}" data-view="notation">Буквы</button>
+        <button class="${state.view === "learn" ? "active" : ""}" data-view="learn">План</button>
+        <button class="${state.view === "trainer" ? "active" : ""}" data-view="trainer">Практика</button>
       </nav>
     </header>`;
 }
@@ -373,8 +580,8 @@ function renderHero() {
         <h2>CFOP как понятная карта действий</h2>
         <p>Сначала смотри на схему: что важно подсвечено, лишнее приглушено. Потом повторяй формулу маленькими кусками.</p>
         <div class="hero-actions">
+          <button class="button primary" data-view="library">Найти мой случай</button>
           <button class="button primary" data-view="notation">Разобрать буквы</button>
-          <button class="button ghost" data-view="learn">Учиться по шагам</button>
         </div>
       </div>
       <div class="hero-cube">${cubeSvg({ active: ["U", "F", "R"], arrowFace: "U", dir: "turn", title: "Кубик в учебном ракурсе" })}</div>
@@ -426,7 +633,7 @@ function renderNotation(compact = false) {
   const moves = compact ? notation.slice(0, 8) : notation;
   return `
     <section class="section" id="notation">
-      <div class="section-heading"><p class="eyebrow">Обозначения</p><h2>Какая буква какую грань крутит</h2><p>Куб держим белым вниз, желтым вверх. Обычный ход идет по стрелке, ход со штрихом — обратно.</p></div>
+      <div class="section-heading"><p class="eyebrow">Обозначения</p><h2>Кубик смотрит на тебя одной гранью</h2><p>Белый держим снизу, желтый сверху, передняя грань смотрит прямо на тебя. Подсвеченный слой крути по стрелке; штрих означает обратное направление.</p></div>
       <div class="notation-grid">
         ${moves.map((item) => `
           <article class="notation-card">
@@ -451,6 +658,36 @@ function renderModeControls() {
     </div>`;
 }
 
+function renderCaseFinder(list) {
+  const activeStage = ["F2L", "OLL", "PLL"].includes(state.filter) ? state.filter : "F2L";
+  const options = finderOptions[activeStage];
+  return `
+    <div class="case-finder">
+      <div class="finder-step">
+        <span class="step-number">1</span>
+        <div>
+          <strong>Выбери этап</strong>
+          <p>Если сомневаешься, начни с F2L.</p>
+        </div>
+        <div class="finder-buttons">
+          ${["F2L", "OLL", "PLL"].map((stage) => `<button class="${activeStage === stage ? "active" : ""}" data-filter="${stage}">${stage}</button>`).join("")}
+        </div>
+      </div>
+      <div class="finder-step">
+        <span class="step-number">2</span>
+        <div>
+          <strong>Что ты видишь на кубике?</strong>
+          <p>Нажми самый похожий вариант.</p>
+        </div>
+        <div class="finder-buttons">
+          <button class="${state.finder === "" ? "active" : ""}" data-finder="">Все варианты</button>
+          ${options.map((option) => `<button class="${state.finder === option.id ? "active" : ""}" data-finder="${option.id}"><span>${option.label}</span><small>${option.text}</small></button>`).join("")}
+        </div>
+      </div>
+      <p class="finder-result"><strong>Показано ${list.length}</strong>. Выбери карточку и смотри крупный разбор: цветной угол, ребро, слот и шаги формулы.</p>
+    </div>`;
+}
+
 function renderStudy(item) {
   const favorite = state.favorites.has(item.id);
   return `
@@ -464,6 +701,7 @@ function renderStudy(item) {
         ${visualSvg(item)}
         <p>${item.note}</p>
         <div class="recognition"><strong>На что смотреть:</strong><span>${recognitionHint(item)}</span></div>
+        ${renderActionGuide(item)}
         <p class="study-label">Формула</p>
         ${algorithmHtml(item)}
         <button class="copy-button" data-copy="${item.alg}">Копировать формулу</button>
@@ -498,9 +736,10 @@ function renderLibrary(embedded = false) {
   return `
     <section class="section" id="library">
       <div class="section-heading compact">
-        <div><p class="eyebrow">Справочник</p><h2>${embedded ? "Быстрый доступ к формулам" : "Формулы и распознавание"}</h2><p>Выбери этап и уровень. Новичку лучше начинать с режима “Начать/База”.</p></div>
+        <div><p class="eyebrow">Рабочий режим</p><h2>${embedded ? "Быстрый доступ к формулам" : "Найди свой случай и разбери его"}</h2><p>Сначала ответь, что видно на кубике. Потом смотри крупную схему: цветной угол, ребро, слот и шаги формулы.</p></div>
         ${renderModeControls()}
       </div>
+      ${renderCaseFinder(list)}
       <div class="stats-row"><span class="stat-pill">Показано: ${list.length}</span><span class="stat-pill">Избранное: ${state.favorites.size}</span>${stats}</div>
       <div class="library-layout">
         ${renderStudy(selected)}
@@ -591,6 +830,7 @@ document.addEventListener("click", async (event) => {
   const viewButton = event.target.closest("[data-view]");
   const filterButton = event.target.closest("[data-filter]");
   const levelButton = event.target.closest("[data-level]");
+  const finderButton = event.target.closest("[data-finder]");
   const filterJump = event.target.closest("[data-filter-jump]");
   const targetButton = event.target.closest("[data-target]");
   const studyButton = event.target.closest("[data-study]");
@@ -621,6 +861,12 @@ document.addEventListener("click", async (event) => {
   }
   if (filterButton) {
     setFilter(filterButton.dataset.filter);
+    return;
+  }
+  if (finderButton) {
+    state.finder = finderButton.dataset.finder || "";
+    selectFirstVisible();
+    render();
     return;
   }
   if (levelButton) {
