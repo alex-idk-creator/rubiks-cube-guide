@@ -1,9 +1,9 @@
 const COLORS = {
   U: "#f5d34b",
-  F: "#2f6fdd",
+  F: "#35a66f",
   R: "#e64c43",
-  L: "#35a66f",
-  B: "#f39a35",
+  L: "#f39a35",
+  B: "#2f6fdd",
   D: "#f7f7f2",
   dim: "#d9e0e7",
   ink: "#17202a",
@@ -293,8 +293,8 @@ function cubeSvg({ active = [], arrowFace = null, dir = "cw", labels = [], piece
 function heroVisualSvg() {
   const fills = {
     U00: COLORS.U, U01: COLORS.U, U02: COLORS.U, U10: COLORS.U, U11: COLORS.U, U12: COLORS.U, U20: COLORS.U, U21: COLORS.U, U22: COLORS.U,
-    F00: COLORS.F, F01: COLORS.F, F02: COLORS.F, F10: COLORS.F, F11: COLORS.F, F12: COLORS.F, F20: COLORS.D, F21: COLORS.F, F22: COLORS.F,
-    R00: COLORS.R, R01: COLORS.R, R02: COLORS.R, R10: COLORS.R, R11: COLORS.R, R12: COLORS.R, R20: COLORS.D, R21: COLORS.R, R22: COLORS.R,
+    F00: COLORS.F, F01: COLORS.F, F02: COLORS.F, F10: COLORS.F, F11: COLORS.F, F12: COLORS.F, F20: COLORS.F, F21: COLORS.D, F22: COLORS.F,
+    R00: COLORS.R, R01: COLORS.R, R02: COLORS.R, R10: COLORS.R, R11: COLORS.R, R12: COLORS.R, R20: COLORS.R, R21: COLORS.D, R22: COLORS.R,
   };
   return `
     <svg class="hero-visual" viewBox="0 0 430 360" role="img" aria-label="Учебный пример CFOP с цветным кубиком">
@@ -308,14 +308,7 @@ function heroVisualSvg() {
         ${faceTilesDetailed("F", fills)}
         ${faceTilesDetailed("R", fills)}
       </g>
-      <g class="hero-pair">
-        <rect x="278" y="104" width="74" height="58" rx="12" fill="var(--surface)" stroke="${COLORS.ink}" stroke-width="4"/>
-        <rect x="288" y="114" width="24" height="38" rx="6" fill="${COLORS.F}" stroke="${COLORS.line}" stroke-width="2"/>
-        <rect x="316" y="114" width="24" height="38" rx="6" fill="${COLORS.R}" stroke="${COLORS.line}" stroke-width="2"/>
-      </g>
-      <path d="M284 198 C314 220 330 248 322 284" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"/>
-      <circle cx="322" cy="288" r="10" fill="var(--accent)"/>
-      <text x="215" y="332" text-anchor="middle" class="svg-note">смотри на цветные элементы, остальное игнорируй</text>
+      <text x="215" y="324" text-anchor="middle" class="svg-note">пример: белый снизу, зелёный спереди, красный справа</text>
     </svg>`;
 }
 
@@ -339,19 +332,18 @@ function frontLayerCells(face) {
 }
 
 function frontArrow(face, dir) {
-  const marker = `marker-end="url(#frontArrow)"`;
-  const line = `fill="none" stroke="${COLORS.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" ${marker}`;
+  const arrow = (d) => `<g class="front-turn-arrow"><path class="arrow-outline" d="${d}"/><path class="arrow-line" d="${d}" marker-end="url(#frontArrow)"/></g>`;
   const reverse = dir === "ccw";
-  if (dir === "double") return `<path d="M278 82 L278 214" ${line}/><path d="M54 214 L54 82" ${line}/><text x="166" y="250" text-anchor="middle" class="svg-label">180°</text>`;
-  if (face === "R" || face === "Rw") return reverse ? `<path d="M274 78 L274 214" ${line}/>` : `<path d="M274 214 L274 78" ${line}/>`;
-  if (face === "L") return reverse ? `<path d="M58 214 L58 78" ${line}/>` : `<path d="M58 78 L58 214" ${line}/>`;
-  if (face === "U") return reverse ? `<path d="M248 34 L84 34" ${line}/>` : `<path d="M84 34 L248 34" ${line}/>`;
-  if (face === "D" || face === "Dw") return reverse ? `<path d="M84 242 L248 242" ${line}/>` : `<path d="M248 242 L84 242" ${line}/>`;
-  if (face === "M") return `<path d="M166 78 L166 214" ${line}/>`;
-  if (face === "cube") return `<path d="M64 250 C38 178 54 78 124 40" ${line}/><path d="M268 34 C300 112 278 212 206 250" ${line}/>`;
+  if (dir === "double") return `${arrow("M228 82 L228 184")}${arrow("M104 184 L104 82")}<text x="166" y="252" text-anchor="middle" class="svg-label">180°</text>`;
+  if (face === "R" || face === "Rw") return reverse ? arrow("M228 82 L228 184") : arrow("M228 184 L228 82");
+  if (face === "L") return reverse ? arrow("M104 184 L104 82") : arrow("M104 82 L104 184");
+  if (face === "U") return reverse ? arrow("M222 74 L110 74") : arrow("M110 74 L222 74");
+  if (face === "D" || face === "Dw") return reverse ? arrow("M110 190 L222 190") : arrow("M222 190 L110 190");
+  if (face === "M") return arrow(reverse ? "M166 82 L166 184" : "M166 184 L166 82");
+  if (face === "cube") return `${arrow("M74 216 C48 154 70 74 126 54")}${arrow("M256 54 C286 118 264 198 204 220")}`;
   return reverse
-    ? `<path d="M220 76 C258 126 244 194 188 218 C138 240 76 212 60 154" ${line}/>`
-    : `<path d="M60 154 C76 96 138 68 188 90 C244 114 258 182 220 232" ${line}/>`;
+    ? arrow("M214 90 C238 122 230 172 190 192 C150 212 104 192 94 150")
+    : arrow("M94 150 C104 108 150 88 190 108 C230 128 238 178 214 210");
 }
 
 function notationSvg(item) {
@@ -386,7 +378,7 @@ function notationSvg(item) {
     <svg class="notation-svg" viewBox="0 0 332 286" role="img" aria-label="Ход ${item.move}: ${faceLabel}">
       <defs>
         <marker id="frontArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="${COLORS.ink}"></path>
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--arrow-fill)" stroke="var(--arrow-outline)" stroke-width="1.4"></path>
         </marker>
       </defs>
       <rect x="72" y="38" width="188" height="188" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
@@ -405,16 +397,11 @@ function notationSvg(item) {
   `;
 }
 
-const pointMap = {
-  U: [150, 86], UF: [150, 102], UR: [218, 86], UL: [82, 86], UB: [150, 42],
-  UFR: [184, 112], UFL: [116, 112], UBR: [218, 58], UBL: [82, 58],
-  FR: [224, 188], FL: [82, 188], F: [150, 190], BR: [252, 116], BL: [48, 116],
-};
-
 function slotPalette(slot = "FR") {
   const side = slot.includes("L") ? COLORS.L : COLORS.R;
   const sideName = slot.includes("L") ? "левая" : "правая";
-  return { down: COLORS.D, front: COLORS.F, side, sideName };
+  const sideColorName = slot.includes("L") ? "оранжевый" : "красный";
+  return { down: COLORS.D, front: COLORS.F, side, sideName, frontColorName: "зелёный", sideColorName };
 }
 
 function paintF2LStickerSet(fills, visual, colors) {
@@ -437,10 +424,10 @@ function paintF2LStickerSet(fills, visual, colors) {
     U: ["U11", "U21", "U12"],
   };
   const edgeMap = {
-    UR: ["U12", "R00"],
+    UR: ["U12", "R01"],
     UL: ["U10", "F00"],
-    UF: ["U21", "F00"],
-    UB: ["U01", "R00"],
+    UF: ["U21", "F01"],
+    UB: ["U01", "R02"],
     FR: ["F12", "R10"],
     FL: ["F10", "F11"],
     BR: ["R12", "R11"],
@@ -477,64 +464,32 @@ function faceTilesDetailed(face, fills = {}) {
   return out;
 }
 
-function stickerPiece(kind, at, slot, wrong = false) {
-  const [x, y] = pointMap[at] || pointMap.U;
-  const colors = slotPalette(slot);
-  const stroke = wrong ? COLORS.corner : COLORS.ink;
-  if (kind === "corner") {
-    return `
-      <g class="sticker-piece">
-        <rect x="${x - 26}" y="${y - 26}" width="52" height="52" rx="10" fill="#fff" stroke="${stroke}" stroke-width="4"/>
-        <rect x="${x - 20}" y="${y - 20}" width="40" height="14" rx="4" fill="${colors.down}" stroke="${COLORS.line}" stroke-width="1"/>
-        <rect x="${x - 20}" y="${y - 2}" width="18" height="22" rx="4" fill="${colors.front}" stroke="${COLORS.line}" stroke-width="1"/>
-        <rect x="${x + 2}" y="${y - 2}" width="18" height="22" rx="4" fill="${colors.side}" stroke="${COLORS.line}" stroke-width="1"/>
-      </g>`;
-  }
-  return `
-    <g class="sticker-piece">
-      <rect x="${x - 28}" y="${y - 20}" width="56" height="40" rx="10" fill="#fff" stroke="${stroke}" stroke-width="4"/>
-      <rect x="${x - 21}" y="${y - 13}" width="19" height="26" rx="4" fill="${colors.front}" stroke="${COLORS.line}" stroke-width="1"/>
-      <rect x="${x + 2}" y="${y - 13}" width="19" height="26" rx="4" fill="${colors.side}" stroke="${COLORS.line}" stroke-width="1"/>
-    </g>`;
-}
-
 function f2lSvg(visual, options = {}) {
   const slot = visual.slot || "FR";
   const colors = slotPalette(slot);
-  const frontSlotCol = slot.includes("L") ? 0 : 2;
-  const sideSlotCol = slot.includes("L") ? 2 : 0;
+  const mirrored = slot.includes("L");
+  const cubeTransform = mirrored ? `transform="translate(330 0) scale(-1 1)"` : "";
   const fills = {
     U11: COLORS.U,
     F11: colors.front,
     R11: colors.side,
-    [`F2${frontSlotCol}`]: colors.front,
     F21: colors.front,
-    [`R2${sideSlotCol}`]: colors.side,
     R21: colors.side,
   };
   paintF2LStickerSet(fills, visual, colors);
-  const pieces = [];
-  if (!options.flat) {
-    if (visual.corner !== "none") pieces.push(stickerPiece("corner", visual.corner || "UFR", slot, visual.wrong));
-    if (visual.edge !== "none") pieces.push(stickerPiece("edge", visual.edge || "UR", slot, visual.wrong));
-  }
   return `
-    <svg class="cube-svg f2l-example-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 320" role="img" aria-label="F2L: цветная пара и цветной слот">
+    <svg class="cube-svg f2l-example-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L: цветная пара и цветной слот">
       <defs>
         <filter id="softShadowF2L" x="-20%" y="-20%" width="140%" height="150%">
           <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#17202a" flood-opacity="0.14"/>
         </filter>
       </defs>
-      <g filter="url(#softShadowF2L)">
+      <g filter="url(#softShadowF2L)" ${cubeTransform}>
         ${faceTilesDetailed("U", fills)}
         ${faceTilesDetailed("F", fills)}
         ${faceTilesDetailed("R", fills)}
       </g>
-      <rect x="118" y="260" width="94" height="26" rx="8" fill="${colors.down}" stroke="${COLORS.ink}" stroke-width="3"/>
-      <rect x="82" y="236" width="58" height="26" rx="8" fill="${colors.front}" stroke="${COLORS.ink}" stroke-width="3"/>
-      <rect x="190" y="236" width="58" height="26" rx="8" fill="${colors.side}" stroke="${COLORS.ink}" stroke-width="3"/>
-      ${pieces.join("")}
-      ${visual.wrong ? `<text x="165" y="306" text-anchor="middle" class="svg-note">цвета пары не совпали — сначала разъедини</text>` : ""}
+      ${visual.wrong ? `<text x="165" y="276" text-anchor="middle" class="svg-note">пара склеена неверно</text>` : ""}
     </svg>
   `;
 }
@@ -638,15 +593,15 @@ function moveMeaning(token) {
 function guideFor(item) {
   if (item.id === "f2l-1") {
     return {
-      before: "Найди готовую пару: угол с белой, синей и красной наклейкой должен стоять рядом с ребром синее-красное.",
-      hold: "Держи белый низом, синий спереди, красный справа. Пара должна быть над правым передним слотом.",
+      before: "Найди готовую пару: угол с белой, зелёной и красной наклейкой должен стоять рядом с ребром зелёно-красное.",
+      hold: "Держи белый низом, зелёный спереди, красный справа. Пара должна быть над правым передним слотом.",
       steps: [
         "U: уведи пару по верхнему слою, чтобы освободить правый слот.",
         "R: подними правую грань и открой место для пары.",
         "U': верни пару над открытый слот.",
         "R': опусти правую грань обратно, пара зайдет в слот.",
       ],
-      check: "После формулы белая наклейка угла смотрит вниз, а синий и красный цвета совпадают с центрами.",
+      check: "После формулы белая наклейка угла смотрит вниз, а зелёный и красный цвета совпадают с центрами.",
     };
   }
   if (item.stage === "F2L") {
@@ -704,7 +659,7 @@ function renderActionGuide(item) {
 function firstF2LTimeline(item) {
   if (item.id !== "f2l-1") return "";
   const frames = [
-    ["Старт", "Пара уже сверху. Синий центр спереди, красный справа, слот пустой.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
+    ["Старт", "Пара уже сверху. Зелёный центр спереди, красный справа, слот пустой.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
     ["U", "Уводим пару верхним слоем, чтобы правый слот не был закрыт.", { type: "f2l", slot: "FR", corner: "UBR", edge: "UB", pair: true }],
     ["R", "Правая грань поднимается: место для пары открыто.", { type: "f2l", slot: "FR", corner: "UR", edge: "UB", pair: true }],
     ["U'", "Пара возвращается над открытое место.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
@@ -956,10 +911,10 @@ function crossSvg() {
     </g>`;
   return `
     <svg class="cross-svg" viewBox="0 0 420 330" role="img" aria-label="Правильно собранный белый крест">
-      ${side(166, 24, COLORS.F, "синий центр")}
+      ${side(166, 24, COLORS.F, "зелёный центр")}
       ${side(304, 130, COLORS.R, "красный центр")}
-      ${side(166, 258, COLORS.B, "оранжевый центр")}
-      ${side(28, 130, COLORS.L, "зеленый центр")}
+      ${side(166, 258, COLORS.B, "синий центр")}
+      ${side(28, 130, COLORS.L, "оранжевый центр")}
       <rect x="124" y="96" width="166" height="166" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
       ${bottom.join("")}
       <text x="210" y="304" text-anchor="middle" class="svg-note">белые ребра снизу, боковые цвета совпадают с центрами</text>
@@ -975,7 +930,7 @@ function renderCrossGuide() {
         ${crossSvg()}
         <div class="cross-checks">
           <div><strong>Цель</strong><p>Белые ребра стоят снизу вокруг белого центра.</p></div>
-          <div><strong>Проверка</strong><p>Синий, красный, зеленый и оранжевый цвета ребер совпадают со своими центрами.</p></div>
+          <div><strong>Проверка</strong><p>Зелёный, красный, синий и оранжевый цвета ребер совпадают со своими центрами.</p></div>
           <div><strong>Дальше</strong><p>Когда крест совпал по бокам, переходи к F2L: ищи белый угол и подходящее ребро.</p></div>
         </div>
       </article>
@@ -999,7 +954,7 @@ function renderModeControls() {
     : "";
   return `
     <div class="library-tools">
-      <label class="search-box"><span>Поиск</span><input id="searchInput" type="search" value="${state.query}" placeholder="Sune, T-perm, R U R'..." /></label>
+      <label class="search-box"><span>Поиск по случаю или формуле</span><input id="searchInput" type="search" value="${state.query}" placeholder="Правая вставка, Sune, R U R'..." /><small>Можно писать название, группу или кусок формулы.</small></label>
       ${levelControls}
     </div>`;
 }
@@ -1043,6 +998,13 @@ function renderF2LWizard() {
         <p class="eyebrow">Найти F2L-случай</p>
         <h3>Ответь на 2–3 вопроса, и список сузится</h3>
         <p>Если не уверен, оставь “не знаю”. Сайт не заставляет угадывать все сразу.</p>
+        <details class="wizard-glossary">
+          <summary>Что значат варианты?</summary>
+          <span><b>Угол</b> деталь с белой наклейкой</span>
+          <span><b>Ребро</b> деталь без белого</span>
+          <span><b>Слот</b> место между двумя центрами</span>
+          <span><b>Неправильно</b> пара склеена, но цвета не совпали</span>
+        </details>
       </div>
       ${groups.map(([key, title, options]) => `
         <div class="wizard-row">
@@ -1058,12 +1020,7 @@ function renderF2LWizard() {
 function renderCaseFacts(item) {
   if (item.stage !== "F2L") return "";
   const colors = slotPalette(item.visual?.slot || "FR");
-  return `
-    <div class="case-facts">
-      <span><b>Угол</b> белый + синий + ${colors.sideName === "правая" ? "красный" : "зеленый"}</span>
-      <span><b>Ребро</b> синий + ${colors.sideName === "правая" ? "красный" : "зеленый"}</span>
-      <span><b>Слот</b> между синим центром и ${colors.sideName === "правая" ? "красным" : "зеленым"}</span>
-    </div>`;
+  return `<p class="case-orientation">На схеме пример одного слота: белый снизу, ${colors.frontColorName} спереди, ${colors.sideColorName} ${colors.sideName === "правая" ? "справа" : "слева"}. Цвета ищи прямо на кубике, без отдельных плашек.</p>`;
 }
 
 function renderStudy(item) {
