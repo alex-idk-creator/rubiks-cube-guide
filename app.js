@@ -1228,31 +1228,31 @@ function f2lDetailIsLeft(item) {
   return String(visual.slot || "FR").includes("L");
 }
 
+function holdFaceCell(row, col, fill, active = false) {
+  const size = 46;
+  const gap = 5;
+  const x = 28 + col * (size + gap);
+  const y = 32 + row * (size + gap);
+  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="8" fill="${fill}" opacity="${active ? 1 : 0.36}" stroke="var(--cube-line)" stroke-width="${active ? 4 : 2}"/>`;
+}
+
 function holdF2LSvg(item) {
   const left = f2lDetailIsLeft(item);
-  const colors = slotPalette(left ? "FL" : "FR");
   const sideColor = left ? COLORS.L : COLORS.R;
-  const fills = {
-    U11: COLORS.U,
-    F11: COLORS.F,
-    F21: COLORS.F,
-    R11: sideColor,
-    R21: sideColor,
-  };
-  const cubeTransform = left ? `transform="translate(330 0) scale(-1 1)"` : "";
-  const sideText = left ? "оранжевый слева" : "красный справа";
+  const sideName = left ? "оранжевая левая сторона" : "красная правая сторона";
+  const whiteCell = left ? "02" : "00";
   return `
-    <svg class="hold-cube-svg" viewBox="0 0 330 292" role="img" aria-label="Как держать кубик: ${colors.frontColorName} спереди, ${sideText}, белый снизу">
-      <defs>
-        <filter id="holdShadow" x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#17202a" flood-opacity="0.12"/>
-        </filter>
-      </defs>
-      <g filter="url(#holdShadow)" ${cubeTransform}>
-        ${faceTilesDetailed("U", fills)}
-        ${faceTilesDetailed("F", fills)}
-        ${faceTilesDetailed("R", fills)}
-      </g>
+    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 196 216" role="img" aria-label="Как держать кубик: ${sideName} слота, белый угол сверху, два цветных ориентира по центру">
+      <rect x="18" y="22" width="160" height="160" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
+      ${Array.from({ length: 9 }).map((_, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        const key = `${row}${col}`;
+        if (key === whiteCell) return holdFaceCell(row, col, COLORS.D, true);
+        if (key === "11" || key === "21") return holdFaceCell(row, col, sideColor, true);
+        return holdFaceCell(row, col, "var(--cube-muted)", false);
+      }).join("")}
+      <text x="98" y="202" text-anchor="middle" class="svg-note">${left ? "эта сторона слева" : "эта сторона справа"}</text>
     </svg>`;
 }
 
@@ -1260,13 +1260,15 @@ function renderHoldOrientation(item) {
   if (item.stage === "F2L") {
     const left = f2lDetailIsLeft(item);
     const colors = slotPalette(left ? "FL" : "FR");
+    const sideText = left ? "оранжевую сторону" : "красную сторону";
+    const sideShown = left ? "оранжевая сторона" : "красная сторона";
     return `
       <div class="hold-orientation">
         <div class="hold-copy">
           <p class="study-label">Как держать кубик</p>
-          <h3>${left ? "Слот спереди слева" : "Слот спереди справа"}</h3>
-          <p>Поверни кубик так, чтобы ${colors.frontColorName} центр смотрел на тебя, а ${colors.sideColorName} был ${left ? "слева" : "справа"}. Белая сторона остается снизу, желтая сверху.</p>
-          <p>Цветные наклейки под центрами показывают уже собранный ориентир после правильного белого креста.</p>
+          <h3>${left ? "Смотри на левую сторону слота" : "Смотри на правую сторону слота"}</h3>
+          <p>Перед формулой держи ${colors.frontColorName} центр перед собой, а ${sideText} — ${left ? "слева" : "справа"}. На рисунке отдельно показана именно эта ${sideShown}, чтобы не путаться в 3D.</p>
+          <p>${left ? "Белая наклейка угла должна быть сверху-справа на этой стороне." : "Белая наклейка угла должна быть сверху-слева на этой стороне."} Две цветные наклейки по центру показывают собранный ориентир после правильного белого креста.</p>
         </div>
         ${holdF2LSvg(item)}
       </div>`;
