@@ -537,10 +537,13 @@ button {
   font-size: 12px;
 }
 
-.pll-arrow {
-  fill: var(--ink);
-  font-size: 46px;
-  font-weight: 950;
+.pll-swap-arrow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.96;
 }
 
 .stage-stepper {
@@ -1112,10 +1115,10 @@ button {
 
 .case-orientation {
   margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
   font-size: 0.92rem;
 }

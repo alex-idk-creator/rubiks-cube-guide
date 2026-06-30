@@ -293,8 +293,8 @@ function cubeSvg({ active = [], arrowFace = null, dir = "cw", labels = [], piece
 function heroVisualSvg() {
   const fills = {
     U00: COLORS.U, U01: COLORS.U, U02: COLORS.U, U10: COLORS.U, U11: COLORS.U, U12: COLORS.U, U20: COLORS.U, U21: COLORS.U, U22: COLORS.U,
-    F00: COLORS.F, F01: COLORS.F, F02: COLORS.F, F10: COLORS.F, F11: COLORS.F, F12: COLORS.F, F20: COLORS.F, F21: COLORS.D, F22: COLORS.F,
-    R00: COLORS.R, R01: COLORS.R, R02: COLORS.R, R10: COLORS.R, R11: COLORS.R, R12: COLORS.R, R20: COLORS.R, R21: COLORS.D, R22: COLORS.R,
+    F00: COLORS.F, F01: COLORS.F, F02: COLORS.F, F10: COLORS.F, F11: COLORS.F, F12: COLORS.F, F20: COLORS.F, F21: COLORS.F, F22: COLORS.F,
+    R00: COLORS.R, R01: COLORS.R, R02: COLORS.R, R10: COLORS.R, R11: COLORS.R, R12: COLORS.R, R20: COLORS.R, R21: COLORS.R, R22: COLORS.R,
   };
   return `
     <svg class="hero-visual" viewBox="0 0 430 360" role="img" aria-label="Учебный пример CFOP с цветным кубиком">
@@ -411,7 +411,7 @@ function putStickerSet(fills, stickers = {}) {
 }
 
 function f2lCornerStickers(position, colors, visual = {}) {
-  const readyFRCorner = { U22: colors.front, F02: colors.down, R02: colors.side };
+  const readyFRCorner = { U22: colors.down, F02: colors.front, R02: colors.side };
   const visible = {
     UFR: visual.pair ? readyFRCorner : { U22: colors.down, F02: colors.front, R02: colors.side },
     UFL: { U20: colors.down, F00: colors.front },
@@ -445,6 +445,36 @@ function f2lEdgeStickers(position, colors) {
   return visible[position] || visible.UR;
 }
 
+function mirrorF2LPositionForDrawing(position) {
+  const map = {
+    UFR: "UFR",
+    UBR: "UBR",
+    UR: "UR",
+    FR: "FR",
+    BR: "BR",
+    UFL: "UFR",
+    UBL: "UBR",
+    UL: "UR",
+    FL: "FR",
+    BL: "BR",
+    UF: "UF",
+    UB: "UB",
+    U: "U",
+    none: "none",
+  };
+  return map[position] || position;
+}
+
+function normalizeF2LVisualForDrawing(visual, mirrored) {
+  if (!mirrored) return visual;
+  return {
+    ...visual,
+    slot: "FR",
+    corner: mirrorF2LPositionForDrawing(visual.corner || "UFR"),
+    edge: mirrorF2LPositionForDrawing(visual.edge || "UR"),
+  };
+}
+
 function paintF2LStickerSet(fills, visual, colors) {
   if (visual.corner !== "none") {
     putStickerSet(fills, f2lCornerStickers(visual.corner || "UFR", colors, visual));
@@ -476,15 +506,15 @@ function f2lSvg(visual, options = {}) {
   const slot = visual.slot || "FR";
   const colors = slotPalette(slot);
   const mirrored = slot.includes("L");
+  const drawVisual = normalizeF2LVisualForDrawing(visual, mirrored);
   const cubeTransform = mirrored ? `transform="translate(330 0) scale(-1 1)"` : "";
   const fills = {
     U11: COLORS.U,
     F11: colors.front,
     R11: colors.side,
     F21: colors.front,
-    R21: colors.side,
   };
-  paintF2LStickerSet(fills, visual, colors);
+  paintF2LStickerSet(fills, drawVisual, colors);
   return `
     <svg class="cube-svg f2l-example-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L: цветная пара и цветной слот">
       <defs>
@@ -514,7 +544,7 @@ function ollSvg(visual) {
   };
   const sideDot = (face, index, x, y) => {
     const active = sideSet.has(`${face}${index}`);
-    return `<rect class="side-sticker" x="${x}" y="${y}" width="34" height="18" rx="6" fill="${active ? COLORS.U : "var(--cube-muted)"}" opacity="${active ? 1 : 0.55}" stroke="var(--cube-line)" stroke-width="2"/>`;
+    return `<circle class="side-sticker-dot" cx="${x + 17}" cy="${y + 9}" r="${active ? 10 : 8}" fill="${active ? COLORS.U : "var(--cube-muted)"}" opacity="${active ? 1 : 0.5}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>`;
   };
   return `
     <svg class="oll-flat-svg" viewBox="0 0 330 300" role="img" aria-label="OLL после желтого креста: верх и боковые желтые наклейки">
@@ -531,27 +561,49 @@ function ollSvg(visual) {
 function pllSvg(visual) {
   const blocks = new Set(visual.blocks || []);
   const sideColors = { front: COLORS.F, right: COLORS.R, back: COLORS.B, left: COLORS.L };
-  const sideBar = (side, x, y, w, h) => {
-    const solved = blocks.has(side) || blocks.has("corners") || blocks.has("edges");
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${solved ? sideColors[side] : "var(--cube-muted)"}" opacity="${solved ? 1 : 0.62}" stroke="var(--cube-line)" stroke-width="${solved ? 4 : 2}"/>`;
+  const sideReady = (side, index) => {
+    if (blocks.has(side)) return true;
+    if (blocks.has("corners")) return index !== 1;
+    if (blocks.has("edges")) return index === 1;
+    return false;
   };
-  const arrow = visual.arrows === "cw" || visual.arrows === "cycle" ? "↻" : visual.arrows === "ccw" ? "↺" : visual.arrows === "diagonal" ? "⤫" : visual.arrows === "cross" ? "↕" : "⇄";
+  const sideSticker = (side, index, x, y, w, h) => {
+    const solved = sideReady(side, index);
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="${solved ? sideColors[side] : "var(--cube-muted)"}" opacity="${solved ? 1 : 0.52}" stroke="var(--cube-line)" stroke-width="${solved ? 3 : 2}"/>`;
+  };
+  const stripH = (side, y) => [0, 1, 2].map((index) => sideSticker(side, index, 94 + index * 48, y, 42, 24)).join("");
+  const stripV = (side, x) => [0, 1, 2].map((index) => sideSticker(side, index, x, 82 + index * 45, 24, 39)).join("");
+  const arrowPaths = {
+    cw: [`M119 82 C214 42 288 118 247 213`],
+    cycle: [`M119 82 C214 42 288 118 247 213`],
+    ccw: [`M247 82 C152 42 78 118 119 213`],
+    opposite: [`M165 88 L165 209`, `M104 149 L226 149`],
+    cross: [`M104 95 L226 204`, `M226 95 L104 204`],
+    diagonal: [`M108 94 L222 205`, `M222 94 L108 205`],
+    adjacent: [`M105 150 C130 91 201 90 225 150`, `M225 150 C200 210 130 210 105 150`],
+    swap: [`M103 149 L227 149`],
+  }[visual.arrows] || [`M103 149 L227 149`];
+  const twoWay = ["opposite", "cross", "diagonal", "swap"].includes(visual.arrows);
   return `
     <svg class="pll-flat-svg" viewBox="0 0 330 300" role="img" aria-label="PLL: готовые блоки и перестановка">
+      <defs>
+        <marker id="pllArrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"></path>
+        </marker>
+      </defs>
       <text x="165" y="28" text-anchor="middle" class="svg-note">верх желтый — ищи боковые блоки</text>
-      ${sideBar("back", 94, 44, 142, 24)}
-      ${sideBar("front", 94, 232, 142, 24)}
-      ${sideBar("left", 58, 82, 24, 134)}
-      ${sideBar("right", 248, 82, 24, 134)}
+      ${stripH("back", 44)}
+      ${stripH("front", 232)}
+      ${stripV("left", 58)}
+      ${stripV("right", 248)}
       <rect x="92" y="76" width="146" height="146" rx="18" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="5"/>
       ${Array.from({ length: 9 }).map((_, index) => {
         const row = Math.floor(index / 3);
         const col = index % 3;
         return `<rect x="${104 + col * 42}" y="${88 + row * 42}" width="36" height="36" rx="7" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>`;
       }).join("")}
-      <circle cx="165" cy="149" r="42" fill="var(--surface)" stroke="var(--cube-line)" stroke-width="4"/>
-      <text x="165" y="164" text-anchor="middle" class="pll-arrow">${arrow}</text>
-      <text x="165" y="282" text-anchor="middle" class="svg-note">${blocks.has("none") ? "готовых блоков нет" : "цветные полосы — готовые блоки"}</text>
+      ${arrowPaths.map((path) => `<path d="${path}" class="pll-swap-arrow" marker-end="url(#pllArrowHead)" ${twoWay ? `marker-start="url(#pllArrowHead)"` : ""}/>`).join("")}
+      <text x="165" y="282" text-anchor="middle" class="svg-note">${blocks.has("none") ? "готовых блоков нет — смотри обмены" : "цветные мини-стикеры — уже совпавшие части"}</text>
     </svg>`;
 }
 
@@ -1065,20 +1117,21 @@ function crossSvg() {
         ${tiles.join("")}
       </g>`;
   };
-  const matchLine = (x1, y1, x2, y2, color) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${color}" stroke-width="7" stroke-linecap="round" opacity=".9"/>`;
+  const whiteBridge = (x, y, w, h) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="2.5"/>`;
   return `
     <svg class="cross-svg cross-net-svg" viewBox="0 0 520 520" role="img" aria-label="Правильно собранный белый крест: белые ребра и совпадающие боковые центры">
-      <text x="260" y="28" text-anchor="middle" class="svg-note">развертка: белый крест + четыре совпадающих боковых цвета</text>
+      <text x="260" y="28" text-anchor="middle" class="svg-note">белый крест + совпадение с центрами</text>
       ${face(198, 52, COLORS.F, [[2, 1]])}
       ${face(344, 198, COLORS.R, [[1, 0]])}
       ${face(198, 344, COLORS.B, [[0, 1]])}
       ${face(52, 198, COLORS.L, [[1, 2]])}
       ${whiteFace(198, 198)}
-      ${matchLine(260, 178, 260, 198, COLORS.F)}
-      ${matchLine(322, 260, 344, 260, COLORS.R)}
-      ${matchLine(260, 322, 260, 344, COLORS.B)}
-      ${matchLine(198, 260, 176, 260, COLORS.L)}
-      <text x="260" y="494" text-anchor="middle" class="svg-note">если боковой цвет ребра не совпал с центром, крест ещё неправильный</text>
+      ${whiteBridge(242, 181, 36, 14)}
+      ${whiteBridge(325, 242, 14, 36)}
+      ${whiteBridge(242, 325, 36, 14)}
+      ${whiteBridge(181, 242, 14, 36)}
+      <text x="260" y="494" text-anchor="middle" class="svg-note">цветная наклейка ребра совпадает с центром</text>
     </svg>`;
 }
 
@@ -1291,7 +1344,7 @@ function renderTrainer() {
 }
 
 function renderSources() {
-  return `<section class="section sources"><div class="section-heading"><p class="eyebrow">Источники</p><h2>Формулы сверены по учебным базам</h2><p>OLL намеренно ограничен 7 OCLL-случаями после желтого креста.</p><p class="source-links"><a href="https://jperm.net/3x3/moves" target="_blank" rel="noreferrer">J Perm Move Notation</a><a href="https://jperm.net/algs/pll" target="_blank" rel="noreferrer">J Perm PLL</a><a href="https://jperm.net/algs/2lookoll" target="_blank" rel="noreferrer">J Perm 2-Look OLL</a><a href="https://www.speedsolving.com/wiki/index.php/PLL" target="_blank" rel="noreferrer">Speedsolving PLL</a><a href="https://www.rubiksplace.com/speedcubing/F2L-algorithms/" target="_blank" rel="noreferrer">Rubiksplace F2L</a></p></div></section>`;
+  return `<section class="section sources"><div class="section-heading"><p class="eyebrow">Источники</p><h2>Формулы сверены по учебным базам</h2><p>OLL намеренно ограничен 7 OCLL-случаями после желтого креста.</p><p class="source-links"><a href="https://jperm.net/3x3/moves" target="_blank" rel="noreferrer">J Perm Move Notation</a><a href="https://jperm.net/algs/pll" target="_blank" rel="noreferrer">J Perm PLL</a><a href="https://jperm.net/algs/2lookoll" target="_blank" rel="noreferrer">J Perm 2-Look OLL</a><a href="https://www.speedsolving.com/wiki/index.php/PLL" target="_blank" rel="noreferrer">Speedsolving PLL</a><a href="https://speedcubedb.com/a/3x3/F2L" target="_blank" rel="noreferrer">SpeedCubeDB F2L</a><a href="https://www.rubiksplace.com/speedcubing/F2L-algorithms/" target="_blank" rel="noreferrer">Rubiksplace F2L</a></p></div></section>`;
 }
 
 function render() {
