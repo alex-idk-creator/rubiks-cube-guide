@@ -494,7 +494,16 @@ function frontLayerCells(face) {
 function frontArrow(face, dir) {
   const arrow = (d) => `<g class="front-turn-arrow"><path class="arrow-outline" d="${d}"/><path class="arrow-line" d="${d}" marker-end="url(#frontArrow)"/></g>`;
   const reverse = dir === "ccw";
-  if (dir === "double") return `${arrow("M228 82 L228 184")}${arrow("M104 184 L104 82")}<text x="166" y="252" text-anchor="middle" class="svg-label">180°</text>`;
+  if (dir === "double") {
+    const label = `<text x="166" y="252" text-anchor="middle" class="svg-label">180°</text>`;
+    if (face === "R" || face === "Rw") return `${arrow("M218 184 L218 82")}${arrow("M240 82 L240 184")}${label}`;
+    if (face === "L") return `${arrow("M92 82 L92 184")}${arrow("M116 184 L116 82")}${label}`;
+    if (face === "U") return `${arrow("M110 72 L222 72")}${arrow("M222 96 L110 96")}${label}`;
+    if (face === "D" || face === "Dw") return `${arrow("M222 176 L110 176")}${arrow("M110 202 L222 202")}${label}`;
+    if (face === "M") return `${arrow("M154 184 L154 82")}${arrow("M178 82 L178 184")}${label}`;
+    if (face === "cube") return `${arrow("M74 216 C48 154 70 74 126 54")}${arrow("M256 54 C286 118 264 198 204 220")}${label}`;
+    return `${arrow("M94 150 C104 108 150 88 190 108 C230 128 238 178 214 210")}${arrow("M214 90 C238 122 230 172 190 192 C150 212 104 192 94 150")}${label}`;
+  }
   if (face === "R" || face === "Rw") return reverse ? arrow("M228 82 L228 184") : arrow("M228 184 L228 82");
   if (face === "L") return reverse ? arrow("M104 184 L104 82") : arrow("M104 82 L104 184");
   if (face === "U") return reverse ? arrow("M222 74 L110 74") : arrow("M110 74 L222 74");
