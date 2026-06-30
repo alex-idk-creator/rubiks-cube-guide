@@ -688,6 +688,7 @@ function physicalF2LFills(visual) {
     F11: COLORS.F,
     F21: COLORS.F,
     R11: visual.mirror ? COLORS.L : COLORS.R,
+    R21: visual.mirror ? COLORS.L : COLORS.R,
   };
   const seedCells = new Set();
   Object.entries(rawMap).forEach(([cell, sticker]) => {
