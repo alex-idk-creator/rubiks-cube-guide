@@ -404,45 +404,53 @@ function slotPalette(slot = "FR") {
   return { down: COLORS.D, front: COLORS.F, side, sideName, frontColorName: "зелёный", sideColorName };
 }
 
-function paintF2LStickerSet(fills, visual, colors) {
-  const put = (key, color) => {
+function putStickerSet(fills, stickers = {}) {
+  Object.entries(stickers).forEach(([key, color]) => {
     if (key) fills[key] = color;
+  });
+}
+
+function f2lCornerStickers(position, colors, visual = {}) {
+  const readyFRCorner = { U22: colors.front, F02: colors.down, R02: colors.side };
+  const visible = {
+    UFR: visual.pair ? readyFRCorner : { U22: colors.down, F02: colors.front, R02: colors.side },
+    UFL: { U20: colors.down, F00: colors.front },
+    UBR: { U02: colors.down, R00: colors.side },
+    UBL: { U00: colors.down },
+    UR: { U12: colors.down, R01: colors.side },
+    UL: { U10: colors.down },
+    UF: { U21: colors.down, F01: colors.front },
+    UB: { U01: colors.down },
+    FR: { F22: colors.front, R22: colors.side },
+    FL: { F20: colors.front },
+    BR: { R20: colors.side },
+    BL: {},
+    U: { U11: colors.down, U21: colors.front, U12: colors.side },
   };
-  const cornerMap = {
-    UFR: ["U22", "F02", "R00"],
-    UFL: ["U20", "F00", "F01"],
-    UBR: ["U02", "R01", "R00"],
-    UBL: ["U00", "U01", "F00"],
-    UR: ["U12", "R00", "R01"],
-    UL: ["U10", "F00", "U20"],
-    UF: ["U21", "F00", "F01"],
-    UB: ["U01", "R00", "U02"],
-    FR: ["F22", "R20", "F21"],
-    FL: ["F20", "F21", "U20"],
-    BR: ["R22", "R21", "U02"],
-    BL: ["F20", "U00", "F21"],
-    U: ["U11", "U21", "U12"],
+  return visible[position] || visible.UFR;
+}
+
+function f2lEdgeStickers(position, colors) {
+  const visible = {
+    UR: { U12: colors.front, R01: colors.side },
+    UL: { U10: colors.front },
+    UF: { U21: colors.front, F01: colors.side },
+    UB: { U01: colors.front },
+    FR: { F12: colors.front, R12: colors.side },
+    FL: { F10: colors.front },
+    BR: { R10: colors.side },
+    BL: {},
+    none: {},
   };
-  const edgeMap = {
-    UR: ["U12", "R01"],
-    UL: ["U10", "F00"],
-    UF: ["U21", "F01"],
-    UB: ["U01", "R02"],
-    FR: ["F12", "R10"],
-    FL: ["F10", "F11"],
-    BR: ["R12", "R11"],
-    BL: ["F10", "F20"],
-  };
-  const cornerKeys = cornerMap[visual.corner || "UFR"] || cornerMap.UFR;
-  const edgeKeys = edgeMap[visual.edge || "UR"] || edgeMap.UR;
+  return visible[position] || visible.UR;
+}
+
+function paintF2LStickerSet(fills, visual, colors) {
   if (visual.corner !== "none") {
-    put(cornerKeys[0], colors.down);
-    put(cornerKeys[1], colors.front);
-    put(cornerKeys[2], colors.side);
+    putStickerSet(fills, f2lCornerStickers(visual.corner || "UFR", colors, visual));
   }
   if (visual.edge !== "none") {
-    put(edgeKeys[0], colors.front);
-    put(edgeKeys[1], colors.side);
+    putStickerSet(fills, f2lEdgeStickers(visual.edge || "UR", colors));
   }
 }
 
@@ -788,6 +796,9 @@ function f2lRecognitionSvg(item) {
   const cornerCell = topPositionCell(visual.corner || "UFR", [2, 2]);
   const edgeCell = topPositionCell(visual.edge || "UR", [2, 1]);
   const slotX = slot.includes("L") ? 54 : 194;
+  const cornerColors = visual.pair
+    ? { top: colors.front, left: colors.down, right: colors.side }
+    : { top: colors.down, left: colors.front, right: colors.side };
   const topCell = (col, row) => {
     const x = 54 + col * 70;
     const y = 48 + row * 58;
@@ -801,9 +812,9 @@ function f2lRecognitionSvg(item) {
       return `
         <g>
           <rect x="${x}" y="${y}" width="42" height="32" rx="7" fill="var(--surface)" stroke="var(--cube-line)" stroke-width="3"/>
-          <rect x="${x + 4}" y="${y + 4}" width="34" height="8" rx="3" fill="${colors.down}"/>
-          <rect x="${x + 4}" y="${y + 15}" width="15" height="13" rx="3" fill="${colors.front}"/>
-          <rect x="${x + 23}" y="${y + 15}" width="15" height="13" rx="3" fill="${colors.side}"/>
+          <rect x="${x + 4}" y="${y + 4}" width="34" height="8" rx="3" fill="${cornerColors.top}"/>
+          <rect x="${x + 4}" y="${y + 15}" width="15" height="13" rx="3" fill="${cornerColors.left}"/>
+          <rect x="${x + 23}" y="${y + 15}" width="15" height="13" rx="3" fill="${cornerColors.right}"/>
         </g>`;
     }
     return `
@@ -1019,29 +1030,55 @@ function renderStageStepper() {
 }
 
 function crossSvg() {
-  const cell = (x, y, fill, active = false) => `<rect x="${x}" y="${y}" width="46" height="46" rx="8" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 4 : 2}"/>`;
-  const bottom = [];
-  for (let r = 0; r < 3; r += 1) {
-    for (let c = 0; c < 3; c += 1) {
-      const cross = (r === 1 || c === 1);
-      bottom.push(cell(132 + c * 52, 104 + r * 52, cross ? COLORS.D : COLORS.dim, cross));
+  const size = 38;
+  const gap = 4;
+  const faceSize = size * 3 + gap * 2;
+  const dim = "var(--cube-muted)";
+  const sticker = (x, y, fill, active = false) =>
+    `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.28}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>`;
+  const face = (x, y, faceColor, activeCells = []) => {
+    const activeSet = new Set(activeCells.map(([r, c]) => `${r}${c}`));
+    const tiles = [];
+    for (let r = 0; r < 3; r += 1) {
+      for (let c = 0; c < 3; c += 1) {
+        const active = activeSet.has(`${r}${c}`) || (r === 1 && c === 1);
+        tiles.push(sticker(x + c * (size + gap), y + r * (size + gap), active ? faceColor : dim, active));
+      }
     }
-  }
-  const side = (x, y, color, label) => `
-    <g>
-      <rect x="${x}" y="${y}" width="86" height="42" rx="8" fill="${color}" stroke="var(--cube-line)" stroke-width="4"/>
-      <rect x="${x + 22}" y="${y + 48}" width="42" height="42" rx="8" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="4"/>
-      <text x="${x + 43}" y="${y - 10}" text-anchor="middle" class="svg-note">${label}</text>
-    </g>`;
+    return `
+      <g>
+        <rect x="${x - 7}" y="${y - 7}" width="${faceSize + 14}" height="${faceSize + 14}" rx="14" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="3"/>
+        ${tiles.join("")}
+      </g>`;
+  };
+  const whiteFace = (x, y) => {
+    const tiles = [];
+    for (let r = 0; r < 3; r += 1) {
+      for (let c = 0; c < 3; c += 1) {
+        const cross = r === 1 || c === 1;
+        tiles.push(sticker(x + c * (size + gap), y + r * (size + gap), cross ? COLORS.D : dim, cross));
+      }
+    }
+    return `
+      <g>
+        <rect x="${x - 7}" y="${y - 7}" width="${faceSize + 14}" height="${faceSize + 14}" rx="14" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="4"/>
+        ${tiles.join("")}
+      </g>`;
+  };
+  const matchLine = (x1, y1, x2, y2, color) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${color}" stroke-width="7" stroke-linecap="round" opacity=".9"/>`;
   return `
-    <svg class="cross-svg" viewBox="0 0 420 330" role="img" aria-label="Правильно собранный белый крест">
-      ${side(166, 24, COLORS.F, "зелёный центр")}
-      ${side(304, 130, COLORS.R, "красный центр")}
-      ${side(166, 258, COLORS.B, "синий центр")}
-      ${side(28, 130, COLORS.L, "оранжевый центр")}
-      <rect x="124" y="96" width="166" height="166" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
-      ${bottom.join("")}
-      <text x="210" y="304" text-anchor="middle" class="svg-note">белые ребра снизу, боковые цвета совпадают с центрами</text>
+    <svg class="cross-svg cross-net-svg" viewBox="0 0 520 520" role="img" aria-label="Правильно собранный белый крест: белые ребра и совпадающие боковые центры">
+      <text x="260" y="28" text-anchor="middle" class="svg-note">развертка: белый крест + четыре совпадающих боковых цвета</text>
+      ${face(198, 52, COLORS.F, [[2, 1]])}
+      ${face(344, 198, COLORS.R, [[1, 0]])}
+      ${face(198, 344, COLORS.B, [[0, 1]])}
+      ${face(52, 198, COLORS.L, [[1, 2]])}
+      ${whiteFace(198, 198)}
+      ${matchLine(260, 178, 260, 198, COLORS.F)}
+      ${matchLine(322, 260, 344, 260, COLORS.R)}
+      ${matchLine(260, 322, 260, 344, COLORS.B)}
+      ${matchLine(198, 260, 176, 260, COLORS.L)}
+      <text x="260" y="494" text-anchor="middle" class="svg-note">если боковой цвет ребра не совпал с центром, крест ещё неправильный</text>
     </svg>`;
 }
 
