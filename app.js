@@ -14,6 +14,25 @@ const COLORS = {
   pair: "#29a66a",
 };
 
+const F2L_PAINT_COLORS = [
+  { id: "white", label: "Белый", short: "W", value: COLORS.D, role: "down" },
+  { id: "yellow", label: "Жёлтый", short: "Y", value: COLORS.U, role: "up" },
+  { id: "green", label: "Зелёный", short: "G", value: COLORS.F, role: "side-color" },
+  { id: "blue", label: "Синий", short: "B", value: COLORS.B, role: "side-color" },
+  { id: "red", label: "Красный", short: "R", value: COLORS.R, role: "side-color" },
+  { id: "orange", label: "Оранжевый", short: "O", value: COLORS.L, role: "side-color" },
+  { id: "gray", label: "Стереть", short: "×", value: "var(--cube-muted)", role: "erase" },
+];
+
+const F2L_SIDE_COLORS = new Set(["green", "blue", "red", "orange"]);
+const F2L_FIXED_COLOR_ROLES = { white: "down", yellow: "up" };
+const F2L_ROLE_LABELS = {
+  front: "цвет переднего центра",
+  side: "цвет бокового центра",
+  down: "белый",
+  up: "жёлтый",
+};
+
 const notation = [
   { move: "R", title: "Правая грань", face: "R", dir: "cw", text: "Передняя грань смотрит на тебя. Крути правый слой вверх по стрелке." },
   { move: "R'", title: "Правая обратно", face: "R", dir: "ccw", text: "Та же правая грань, но стрелка идет вниз: это обратный ход." },
@@ -343,6 +362,10 @@ const state = {
     edge: "",
     pair: "",
     slot: "",
+  },
+  f2lPaint: {
+    selectedColor: "white",
+    stickers: {},
   },
   selectedId: "f2l-1",
   detailId: "",
@@ -690,6 +713,36 @@ function f2lSlotSeedCells(group) {
   return cellsByGroup[group] || [];
 }
 
+function sourceStickerRoleMap(visual) {
+  const raw = String(visual.fl || "").slice(0, 27).padEnd(27, "l");
+  const roleByCode = { g: "front", o: "side", w: "down", y: "up" };
+  const map = {};
+  ["U", "F", "R"].forEach((face, faceIndex) => {
+    for (let index = 0; index < 9; index += 1) {
+      const code = raw[faceIndex * 9 + index];
+      if (!code || code === "l" || !roleByCode[code]) continue;
+      const row = Math.floor(index / 3);
+      const sourceCol = index % 3;
+      const col = face === "R" ? 2 - sourceCol : sourceCol;
+      map[`${face}${row}${col}`] = roleByCode[code];
+    }
+  });
+  return map;
+}
+
+function f2lExpectedRoleMap(item) {
+  const visual = item.visual || {};
+  if (visual.type !== "f2l-source") return {};
+  return {
+    U11: "up",
+    F11: "front",
+    F21: "front",
+    R11: "side",
+    R21: "side",
+    ...sourceStickerRoleMap(visual),
+  };
+}
+
 function physicalF2LFills(visual) {
   const rawMap = sourceStickerMap(visual);
   const fills = {
@@ -763,6 +816,167 @@ function sourceF2LSvg(visual, options = {}) {
       ${visual.mirror ? `<text x="165" y="276" text-anchor="middle" class="svg-note">зеркало правой вставки</text>` : ""}
     </svg>
   `;
+}
+
+function paintColor(id) {
+  return F2L_PAINT_COLORS.find((color) => color.id === id) || F2L_PAINT_COLORS[0];
+}
+
+function paintEntries() {
+  return Object.entries(state.f2lPaint.stickers).filter(([, color]) => color && color !== "gray");
+}
+
+function cellFriendlyName(cell) {
+  const names = {
+    U11: "жёлтый центр сверху",
+    F11: "передний центр слота",
+    R11: "боковой центр слота",
+    F21: "собранная наклейка под передним центром",
+    R21: "собранная наклейка под боковым центром",
+    F12: "передняя наклейка ребра в слоте",
+    R12: "боковая наклейка ребра в слоте",
+    F22: "передняя наклейка угла в слоте",
+    R22: "боковая наклейка угла в слоте",
+    U22: "верхний передний правый угол",
+    U21: "верхнее переднее ребро",
+    U12: "верхнее правое ребро",
+    F02: "передняя наклейка верхнего угла",
+    R02: "боковая наклейка верхнего угла",
+    F01: "передняя наклейка верхнего ребра",
+    R01: "боковая наклейка верхнего ребра",
+  };
+  return names[cell] || `${cell}`;
+}
+
+function sideRoleByPaint() {
+  const frontColor = state.f2lPaint.stickers.F11;
+  const sideColor = state.f2lPaint.stickers.R11;
+  const roles = {};
+  if (F2L_SIDE_COLORS.has(frontColor)) roles[frontColor] = "front";
+  if (F2L_SIDE_COLORS.has(sideColor) && sideColor !== frontColor) roles[sideColor] = "side";
+  return roles;
+}
+
+function colorRoleForMatch(colorId, roles) {
+  if (F2L_FIXED_COLOR_ROLES[colorId]) return F2L_FIXED_COLOR_ROLES[colorId];
+  if (F2L_SIDE_COLORS.has(colorId)) return roles[colorId] || "unknown-side";
+  return "";
+}
+
+function f2lPaintMatch(item) {
+  if (item.stage !== "F2L") return { ok: true, score: 0, reasons: [] };
+  const entries = paintEntries();
+  if (!entries.length) return { ok: true, score: 0, reasons: [] };
+  const expected = f2lExpectedRoleMap(item);
+  const roles = sideRoleByPaint();
+  const frontColor = state.f2lPaint.stickers.F11;
+  const sideColor = state.f2lPaint.stickers.R11;
+  if (frontColor && sideColor && F2L_SIDE_COLORS.has(frontColor) && frontColor === sideColor) {
+    return { ok: false, score: 0, reasons: [], mismatch: "Центры слота не могут быть одного цвета." };
+  }
+
+  let score = 0;
+  const reasons = [];
+  for (const [cell, colorId] of entries) {
+    const expectedRole = expected[cell];
+    const userRole = colorRoleForMatch(colorId, roles);
+    if (!expectedRole || !userRole) {
+      return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)} не относится к этому случаю.` };
+    }
+    if (userRole === "unknown-side") {
+      if (!["front", "side"].includes(expectedRole)) {
+        return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)} должен быть ${F2L_ROLE_LABELS[expectedRole] || "другим цветом"}.` };
+      }
+      score += 1;
+      reasons.push(`${cellFriendlyName(cell)}: боковой цвет`);
+      continue;
+    }
+    if (userRole !== expectedRole) {
+      return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)}: ожидался ${F2L_ROLE_LABELS[expectedRole]}, а не ${paintColor(colorId).label.toLowerCase()}.` };
+    }
+    score += ["front", "side"].includes(userRole) ? 3 : 4;
+    reasons.push(`${cellFriendlyName(cell)}: ${paintColor(colorId).label.toLowerCase()}`);
+  }
+
+  return { ok: true, score, reasons };
+}
+
+function f2lPaintHint(listLength) {
+  const entries = paintEntries();
+  if (!entries.length) return "Начни с двух центров слота: переднего и бокового. Потом отметь белый угол и ребро пары.";
+  if (!state.f2lPaint.stickers.F11 || !state.f2lPaint.stickers.R11) return "Чтобы боковые цвета стали относительными, отметь оба центра слота.";
+  if (!entries.some(([, color]) => color === "white")) return "Теперь отметь белую наклейку угла.";
+  if (listLength > 8) return "Чтобы сузить список, добавь две наклейки ребра или вторую боковую наклейку угла.";
+  if (!listLength) return "Совпадений нет. Проверь, что слот поставлен спереди справа, а цвета центров не перепутаны.";
+  return "Список уже узкий: открой подходящую карточку и сравни крупную схему.";
+}
+
+function paintPickerFaceTiles(face) {
+  const cfg = {
+    U: { o: [150, 20], a: [34, 16], b: [-34, 16], base: "var(--cube-shell)" },
+    F: { o: [48, 68], a: [34, 16], b: [0, 36], base: "var(--cube-muted)" },
+    R: { o: [252, 68], a: [-34, 16], b: [0, 36], base: "var(--cube-muted)" },
+  }[face];
+  let out = "";
+  for (let row = 0; row < 3; row += 1) {
+    for (let col = 0; col < 3; col += 1) {
+      const cell = `${face}${row}${col}`;
+      const colorId = state.f2lPaint.stickers[cell];
+      const fill = colorId ? paintColor(colorId).value : cfg.base;
+      const guide = ["F11", "R11", "F21", "R21", "F12", "R12", "F22", "R22", "U22", "U21", "U12"].includes(cell);
+      out += `<polygon class="paint-cell ${colorId ? "painted" : ""} ${guide ? "guide" : ""}" data-paint-cell="${cell}" tabindex="0" role="button" aria-label="${cellFriendlyName(cell)}" points="${tile(cfg.o, cfg.a, cfg.b, col, row)}" fill="${fill}" opacity="${colorId ? 1 : 0.5}" stroke="var(--cube-line)" stroke-width="${colorId ? 3 : guide ? 2.6 : 2}"><title>${cellFriendlyName(cell)}</title></polygon>`;
+    }
+  }
+  return out;
+}
+
+function f2lPaintSvg() {
+  return `
+    <svg class="f2l-paint-svg" viewBox="0 0 330 292" role="img" aria-label="Раскрась важные наклейки F2L">
+      <defs>
+        <filter id="softShadowPaintF2L" x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#17202a" flood-opacity="0.14"/>
+        </filter>
+      </defs>
+      <g filter="url(#softShadowPaintF2L)">
+        ${paintPickerFaceTiles("U")}
+        ${paintPickerFaceTiles("F")}
+        ${paintPickerFaceTiles("R")}
+      </g>
+      <text x="165" y="264" text-anchor="middle" class="svg-note">слот поставь спереди справа</text>
+    </svg>`;
+}
+
+function renderF2LPalette() {
+  return `
+    <div class="paint-palette" aria-label="Цвета для раскраски">
+      ${F2L_PAINT_COLORS.map((color) => `
+        <button class="${state.f2lPaint.selectedColor === color.id ? "active" : ""}" data-paint-color="${color.id}" title="${color.label}">
+          <span style="background:${color.value}">${color.short}</span>
+          <small>${color.label}</small>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderSlotColorStatus() {
+  const front = state.f2lPaint.stickers.F11;
+  const side = state.f2lPaint.stickers.R11;
+  const chip = (label, colorId) => `
+    <span class="slot-color-chip">
+      <i style="background:${colorId ? paintColor(colorId).value : "var(--cube-muted)"}"></i>
+      ${label}: ${colorId ? paintColor(colorId).label.toLowerCase() : "не выбран"}
+    </span>`;
+  return `<div class="slot-color-row">${chip("передний центр", front)}${chip("боковой центр", side)}</div>`;
+}
+
+function renderPaintResultReason(item) {
+  const entries = paintEntries();
+  if (!entries.length || item.stage !== "F2L") return "";
+  const match = f2lPaintMatch(item);
+  if (!match.ok) return "";
+  const reasons = match.reasons.slice(0, 3).join(" · ");
+  const tail = match.reasons.length > 3 ? ` · ещё ${match.reasons.length - 3}` : "";
+  return `<p class="f2l-match-reason">Совпало: ${reasons}${tail}</p>`;
 }
 
 function ollSvg(visual) {
@@ -1194,6 +1408,11 @@ function resetF2LFilters() {
   state.f2lFilters = { corner: "", white: "", edge: "", pair: "", slot: "" };
 }
 
+function resetF2LPaint() {
+  state.f2lPaint.stickers = {};
+  state.f2lPaint.selectedColor = "white";
+}
+
 function jumpToTop() {
   app?.scrollIntoView({ block: "start", inline: "nearest" });
   document.documentElement.scrollTop = 0;
@@ -1217,14 +1436,19 @@ function filteredAlgorithms() {
   const query = state.query.trim().toLowerCase();
   const allowedLevels = state.level === "all" ? ["start", "more", "all"] : state.level === "more" ? ["start", "more"] : ["start"];
   const finderOption = Object.values(finderOptions).flat().find((option) => option.id === state.finder);
-  return algorithms.filter((item) => {
+  const hasPaint = paintEntries().length > 0;
+  const list = algorithms.filter((item) => {
     const stageOk = item.stage === state.filter;
     const levelOk = allowedLevels.includes(item.level);
     const finderOk = !finderOption || finderOption.match(item);
-    const f2lOk = item.stage !== "F2L" || Object.entries(state.f2lFilters).every(([key, value]) => !value || f2lAttributes(item)[key] === value);
+    const f2lOk = item.stage !== "F2L" || f2lPaintMatch(item).ok;
     const haystack = `${item.name} ${item.stage} ${item.group} ${item.alg} ${item.note}`.toLowerCase();
     return stageOk && levelOk && finderOk && f2lOk && (!query || haystack.includes(query));
   });
+  if (state.filter === "F2L" && hasPaint) {
+    return list.sort((a, b) => f2lPaintMatch(b).score - f2lPaintMatch(a).score);
+  }
+  return list;
 }
 
 function selectFirstVisible() {
@@ -1459,36 +1683,36 @@ function renderCaseFinder(list) {
     </div>`;
 }
 
-function renderF2LWizard() {
-  const groups = [
-    ["corner", "Где белый угол?", [["", "не знаю"], ["top", "сверху"], ["slot", "в слоте"]]],
-    ["white", "Куда смотрит белый?", [["", "не знаю"], ["up", "наверх"], ["side", "вбок"], ["slot", "внизу"]]],
-    ["edge", "Где ребро пары?", [["", "не знаю"], ["top", "сверху"], ["slot", "в слоте"]]],
-    ["pair", "Пара уже собрана?", [["", "не знаю"], ["ready", "да"], ["separate", "нет"], ["wrong", "неправильно"]]],
-    ["slot", "Какой слот собираешь?", [["", "любой"], ["right", "правый"], ["left", "левый"]]],
-  ];
+function renderF2LPainter(list) {
+  const paintedCount = paintEntries().length;
   return `
-    <div class="f2l-wizard">
-      <div class="wizard-intro">
-        <p class="eyebrow">Найти F2L-случай</p>
-        <h3>Ответь на 2–3 вопроса, и список сузится</h3>
-        <p>Если не уверен, оставь “не знаю”. Сайт не заставляет угадывать все сразу.</p>
-        <details class="wizard-glossary">
-          <summary>Что значат варианты?</summary>
-          <span><b>Угол</b> деталь с белой наклейкой</span>
-          <span><b>Ребро</b> деталь без белого</span>
-          <span><b>Слот</b> место между двумя центрами</span>
-          <span><b>Неправильно</b> пара склеена, но цвета не совпали</span>
-        </details>
+    <div class="f2l-painter">
+      <div class="paint-intro">
+        <p class="eyebrow">Подобрать F2L</p>
+        <h3>Раскрась угол, ребро и слот вместо ответов на вопросы</h3>
+        <p>Держи белый снизу, жёлтый сверху. Поверни куб так, чтобы слот, который собираешь, был спереди справа. Отметь два центра слота, белый угол и ребро пары; всё лишнее оставь серым.</p>
       </div>
-      ${groups.map(([key, title, options]) => `
-        <div class="wizard-row">
-          <strong>${title}</strong>
-          <div class="wizard-options">
-            ${options.map(([value, label]) => `<button class="${state.f2lFilters[key] === value ? "active" : ""}" data-f2l-filter="${key}" data-f2l-value="${value}">${label}</button>`).join("")}
+      <div class="paint-workspace">
+        <div class="paint-cube-panel">
+          ${f2lPaintSvg()}
+          ${renderSlotColorStatus()}
+          ${renderF2LPalette()}
+          <div class="paint-actions">
+            <span>Выбран: <b>${paintColor(state.f2lPaint.selectedColor).label}</b></span>
+            <button class="text-button" data-reset-f2l-paint>Сбросить раскраску</button>
           </div>
-        </div>`).join("")}
-      <button class="text-button reset-filters" data-reset-f2l>Сбросить выбор</button>
+        </div>
+        <div class="paint-help">
+          <h4>${paintedCount ? `Подходит: ${list.length}` : "Сначала раскрась важные наклейки"}</h4>
+          <p>${f2lPaintHint(list.length)}</p>
+          <ol>
+            <li>Поставь нужный слот спереди справа.</li>
+            <li>Закрась передний и боковой центры реальными цветами своего кубика.</li>
+            <li>Закрась наклейки белого угла и ребра пары.</li>
+            <li>Боковые цвета считаются относительными: зелёно-оранжевый слот сравнивается так же, как зелёно-красный.</li>
+          </ol>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -1535,6 +1759,7 @@ function renderCard(item) {
       <h3>${item.name}</h3>
       ${visualSvg(item, { compact: true, flat: item.stage === "F2L" })}
       ${f2lMiniFacts(item)}
+      ${renderPaintResultReason(item)}
       <p>${item.note}</p>
       ${algorithmHtml(item)}
       <div class="card-actions"><button class="study-button" data-open-case="${item.id}">Открыть разбор</button><button class="copy-button" data-copy="${item.alg}">Копировать</button></div>
@@ -1547,7 +1772,7 @@ function renderAssembly() {
   const list = state.filter === "Cross" ? [] : filteredAlgorithms();
   const stats = ["F2L", "OLL", "PLL"].map((stage) => `<span class="stat-pill">${stage}: ${algorithms.filter((item) => item.stage === stage).length}</span>`).join("");
   const stageBody = state.filter === "Cross" ? renderCrossGuide() : `
-      ${state.filter === "F2L" ? renderF2LWizard() : renderCaseFinder(list)}
+      ${state.filter === "F2L" ? renderF2LPainter(list) : renderCaseFinder(list)}
       <div class="stats-row"><span class="stat-pill">Показано: ${list.length}</span>${stats}</div>
       <div class="cards-heading"><h3>${state.filter === "F2L" ? "Все F2L-варианты" : "Случаи для этого шага"}</h3><p>${state.filter === "F2L" ? "Три карточки в строку на широком экране. Нажми на случай, чтобы открыть полный разбор и вернуться назад к тому же месту." : "Открой карточку, чтобы увидеть крупную схему, формулу и распознавание."}</p></div>
       <div class="cards-grid ${state.filter.toLowerCase()}-overview">${list.map(renderCard).join("") || `<p class="empty-state">Ничего не найдено.</p>`}</div>`;
@@ -1650,6 +1875,9 @@ document.addEventListener("click", async (event) => {
   const finderButton = event.target.closest("[data-finder]");
   const f2lFilterButton = event.target.closest("[data-f2l-filter]");
   const resetF2LButton = event.target.closest("[data-reset-f2l]");
+  const paintColorButton = event.target.closest("[data-paint-color]");
+  const paintCell = event.target.closest("[data-paint-cell]");
+  const resetF2LPaintButton = event.target.closest("[data-reset-f2l-paint]");
   const filterJump = event.target.closest("[data-filter-jump]");
   const targetButton = event.target.closest("[data-target]");
   const studyButton = event.target.closest("[data-study]");
@@ -1670,6 +1898,26 @@ document.addEventListener("click", async (event) => {
     state.theme = state.theme === "dark" ? "light" : "dark";
     localStorage.setItem("cfop-theme", state.theme);
     applyTheme();
+    render();
+    return;
+  }
+  if (paintColorButton) {
+    state.f2lPaint.selectedColor = paintColorButton.dataset.paintColor || "white";
+    render();
+    return;
+  }
+  if (paintCell) {
+    const cell = paintCell.dataset.paintCell;
+    const color = state.f2lPaint.selectedColor;
+    if (color === "gray") delete state.f2lPaint.stickers[cell];
+    else state.f2lPaint.stickers[cell] = color;
+    selectFirstVisible();
+    render();
+    return;
+  }
+  if (resetF2LPaintButton) {
+    resetF2LPaint();
+    selectFirstVisible();
     render();
     return;
   }
