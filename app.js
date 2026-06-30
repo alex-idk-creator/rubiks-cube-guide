@@ -268,8 +268,8 @@ function f2lAttrsForSource(group, mirror = false) {
 function sourceCaseName(source) {
   const special = {
     2: "F2L 2 · вставка через F",
-    3: "F2L 3 · короткая вставка через F",
-    4: "F2L 4 · короткая вставка через R",
+    3: "F2L 3 · трёхходовка через F",
+    4: "F2L 4 · трёхходовка через R",
   };
   return special[source.n] || `F2L ${source.n}`;
 }
@@ -283,7 +283,7 @@ function applyVerifiedF2LData() {
       name: "Правая вставка",
       group: "База",
       alg: first.alg,
-      note: "Проверенная схема SpeedCubeDB F2L 1: белая наклейка угла смотрит сбоку, не сверху.",
+      note: "Формула SpeedCubeDB F2L 1. На модели цветные только физический угол, ребро и центры слота; белая наклейка угла сбоку.",
       mirror: false,
       attrs: f2lAttrsForSource(first.group, false),
     },
@@ -292,7 +292,7 @@ function applyVerifiedF2LData() {
       name: "Левая вставка",
       group: "База",
       alg: "U' L' U L",
-      note: "Зеркало правой вставки: тот же случай, но в левый передний слот.",
+      note: "Зеркало правой вставки: тот же физический угол и ребро, но в левый передний слот.",
       mirror: true,
       attrs: f2lAttrsForSource(first.group, true),
     },
@@ -301,7 +301,7 @@ function applyVerifiedF2LData() {
       name: sourceCaseName(source),
       group: verifiedF2LGroupNames[source.group] || source.group,
       alg: source.alg,
-      note: `Проверенный случай SpeedCubeDB F2L ${source.n}. Серое не важно; цветные наклейки сравни со своим кубиком.`,
+      note: `Формула сверена со SpeedCubeDB F2L ${source.n}. Цветная модель оставляет только физически важные наклейки пары и слота.`,
       mirror: false,
       attrs: f2lAttrsForSource(source.group, false),
     })),
@@ -639,6 +639,69 @@ function faceTilesDetailed(face, fills = {}) {
   return out;
 }
 
+const visibleCubies = [
+  ["U22", "F02", "R02"],
+  ["U20", "F00"],
+  ["U02", "R00"],
+  ["U00"],
+  ["U21", "F01"],
+  ["U12", "R01"],
+  ["U10"],
+  ["U01"],
+  ["F12", "R12"],
+  ["F22", "R22"],
+  ["F10"],
+  ["F20"],
+  ["R10"],
+  ["R20"],
+];
+
+function sourceStickerMap(visual) {
+  const raw = String(visual.fl || "").slice(0, 27).padEnd(27, "l");
+  const sideColor = visual.mirror ? COLORS.L : COLORS.R;
+  const colorByCode = {
+    g: COLORS.F,
+    o: sideColor,
+    w: COLORS.D,
+    y: COLORS.U,
+    r: COLORS.R,
+    b: COLORS.B,
+  };
+  const map = {};
+  ["U", "F", "R"].forEach((face, faceIndex) => {
+    for (let index = 0; index < 9; index += 1) {
+      const code = raw[faceIndex * 9 + index];
+      if (!code || code === "l" || !colorByCode[code]) continue;
+      const row = Math.floor(index / 3);
+      const sourceCol = index % 3;
+      const col = face === "R" ? 2 - sourceCol : sourceCol;
+      map[`${face}${row}${col}`] = { color: colorByCode[code], code };
+    }
+  });
+  return map;
+}
+
+function physicalF2LFills(visual) {
+  const rawMap = sourceStickerMap(visual);
+  const fills = {
+    U11: COLORS.U,
+    F11: COLORS.F,
+    F21: COLORS.F,
+    R11: visual.mirror ? COLORS.L : COLORS.R,
+  };
+  const seedCells = new Set();
+  Object.entries(rawMap).forEach(([cell, sticker]) => {
+    if (cell.startsWith("U") || sticker.code === "w") seedCells.add(cell);
+  });
+  visibleCubies.forEach((cubie) => {
+    if (!cubie.some((cell) => seedCells.has(cell))) return;
+    cubie.forEach((cell) => {
+      if (rawMap[cell]) fills[cell] = rawMap[cell].color;
+    });
+  });
+  return fills;
+}
+
 function f2lSvg(visual, options = {}) {
   const slot = visual.slot || "FR";
   const colors = slotPalette(slot);
@@ -670,30 +733,10 @@ function f2lSvg(visual, options = {}) {
 }
 
 function sourceF2LSvg(visual, options = {}) {
-  const raw = String(visual.fl || "").slice(0, 27).padEnd(27, "l");
-  const sideColor = visual.mirror ? COLORS.L : COLORS.R;
-  const colorByCode = {
-    g: COLORS.F,
-    o: sideColor,
-    w: COLORS.D,
-    y: COLORS.U,
-    r: COLORS.R,
-    b: COLORS.B,
-  };
-  const fills = {};
-  ["U", "F", "R"].forEach((face, faceIndex) => {
-    for (let index = 0; index < 9; index += 1) {
-      const code = raw[faceIndex * 9 + index];
-      if (code && code !== "l" && colorByCode[code]) {
-        const row = Math.floor(index / 3);
-        const col = index % 3;
-        fills[`${face}${row}${col}`] = colorByCode[code];
-      }
-    }
-  });
+  const fills = physicalF2LFills(visual);
   const cubeTransform = visual.mirror ? `transform="translate(330 0) scale(-1 1)"` : "";
   return `
-    <svg class="cube-svg f2l-example-svg source-f2l-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L ${visual.scdb ? `из SpeedCubeDB ${visual.scdb}` : ""}: цветная схема случая">
+    <svg class="cube-svg f2l-example-svg source-f2l-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L ${visual.scdb ? `из SpeedCubeDB ${visual.scdb}` : ""}: физическая модель угла, ребра и слота">
       <defs>
         <filter id="softShadowSourceF2L" x="-20%" y="-20%" width="140%" height="150%">
           <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#17202a" flood-opacity="0.14"/>
@@ -897,7 +940,7 @@ function renderActionGuide(item) {
 function firstF2LTimeline(item) {
   if (item.id !== "f2l-1") return "";
   const frames = [
-    ["Старт", "Сравни именно эту картинку: белая наклейка угла сбоку, цвет пары сверху.", "source"],
+    ["Старт", "Смотри только на цветной угол, ребро и центры: лишние детали не подсвечены.", "source"],
     ["U", "Верхний слой уводит пару в сторону, чтобы правый слот можно было открыть.", "move"],
     ["R", "Правая грань поднимается. Ты временно открываешь место для пары.", "move"],
     ["U'", "Верхний слой возвращает пару к открытому месту.", "move"],
@@ -1100,12 +1143,12 @@ function renderF2LRecognitionBoard(item) {
       <section class="case-section recognition-board">
         <div class="case-section-heading">
           <p class="eyebrow">Как распознать</p>
-          <h3>Сравни цветные наклейки со схемой из базы</h3>
+          <h3>Сравни физический угол, ребро и слот</h3>
         </div>
         <div class="recognition-grid">
           <article>
             ${sourceF2LSvg(visual)}
-            <p><b>Случай:</b> SpeedCubeDB F2L ${visual.scdb}. <b>Группа:</b> ${group}. Серые наклейки не важны, цветные показывают то, что надо найти.</p>
+            <p><b>Случай:</b> SpeedCubeDB F2L ${visual.scdb}. <b>Группа:</b> ${group}. Цветные наклейки принадлежат физическому углу, ребру и центрам слота; серое не трогай.</p>
           </article>
           <article>
             ${slotGoalSvg({ visual: { slot: visual.mirror ? "FL" : "FR" } })}
@@ -1440,7 +1483,7 @@ function renderCaseFacts(item) {
   if (item.stage !== "F2L") return "";
   if (item.visual?.type === "f2l-source") {
     const group = verifiedF2LGroupNames[item.visual.sourceGroup] || item.visual.sourceGroup || "F2L";
-    return `<p class="case-orientation">Схема и основная формула сверены со SpeedCubeDB: F2L ${item.visual.scdb}, группа “${group}”. Серое игнорируй, цветные наклейки сравни с кубиком.</p>`;
+    return `<p class="case-orientation">Формула сверена со SpeedCubeDB: F2L ${item.visual.scdb}, группа “${group}”. Схема построена как физическая модель: цветные только угол, ребро и центры слота.</p>`;
   }
   const colors = slotPalette(item.visual?.slot || "FR");
   return `<p class="case-orientation">На схеме пример одного слота: белый снизу, ${colors.frontColorName} спереди, ${colors.sideColorName} ${colors.sideName === "правая" ? "справа" : "слева"}. Цвета ищи прямо на кубике, без отдельных плашек.</p>`;
