@@ -526,6 +526,12 @@ button {
   font-weight: 850;
 }
 
+.svg-mini-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .piece-label {
   fill: #fff;
   font-size: 16px;
@@ -1204,6 +1210,18 @@ button {
 .timeline-card p {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.move-card-badge {
+  display: grid;
+  place-items: center;
+  min-height: 118px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: clamp(1.7rem, 5vw, 2.6rem);
+  font-weight: 950;
 }
 
 .copy-button,

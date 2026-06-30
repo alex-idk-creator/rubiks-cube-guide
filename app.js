@@ -165,9 +165,9 @@ const algorithms = [
 
   { id: "oll-27", stage: "OLL", level: "start", name: "Sune", group: "OCLL", alg: "R U R' U R U2 R'", note: "Один угол уже желтый сверху. Остальные углы развернутся этой формулой.", visual: { type: "oll", top: "010111110", sides: ["F1", "R0", "R2"], hold: "готовый угол спереди-слева" } },
   { id: "oll-26", stage: "OLL", level: "start", name: "Anti-Sune", group: "OCLL", alg: "R U2 R' U' R U' R'", note: "Зеркальный Sune. Сравни боковые желтые наклейки перед стартом.", visual: { type: "oll", top: "010111011", sides: ["F1", "L0", "L2"], hold: "готовый угол спереди-справа" } },
-  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U R' U R U' R' U R U2 R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2", "B0", "B2"], hold: "без желтых углов сверху, фары на двух сторонах" } },
+  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U2 R' U' R U R' U' R U' R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2", "B0", "B2"], hold: "без желтых углов сверху, фары на двух сторонах" } },
   { id: "oll-22", stage: "OLL", level: "more", name: "Pi", group: "OCLL", alg: "R U2 R2 U' R2 U' R2 U2 R", note: "Нет готовых углов сверху. Отличается парой боковых желтых наклеек на одной стороне.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2"], hold: "фары на одной стороне" } },
-  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D R' U2 R D' R' U2 R'", note: "Два угла уже желтые сверху на одной стороне. Держи боковые фары слева.", visual: { type: "oll", top: "110111110", sides: ["L0", "L2"], hold: "фары слева" } },
+  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D' R U2 R' D R U2 R", note: "Два угла уже желтые сверху на одной стороне. Держи боковые фары слева.", visual: { type: "oll", top: "110111110", sides: ["L0", "L2"], hold: "фары слева" } },
   { id: "oll-24", stage: "OLL", level: "more", name: "Chameleon", group: "OCLL", alg: "r U R' U' r' F R F'", note: "Два готовых угла по диагонали. Ориентируйся по боковым желтым.", visual: { type: "oll", top: "011111110", sides: ["F2", "B0"], hold: "желтые углы по диагонали" } },
   { id: "oll-25", stage: "OLL", level: "more", name: "Bowtie", group: "OCLL", alg: "F' r U R' U' r' F R", note: "Два готовых угла рядом, но боковые желтые образуют форму бабочки.", visual: { type: "oll", top: "010111111", sides: ["F0", "R2"], hold: "форма бабочки по боковым наклейкам" } },
 
@@ -193,6 +193,143 @@ const algorithms = [
   { id: "pll-gc", stage: "PLL", level: "all", name: "Gc-perm", group: "G perms", alg: "R2 U' R U' R U R' U R2 D' U R U' R' D", note: "Следи за D-ходом и блоком.", visual: { type: "pll", kind: "g", blocks: ["left"], arrows: "cycle" } },
   { id: "pll-gd", stage: "PLL", level: "all", name: "Gd-perm", group: "G perms", alg: "R U R' U' D R2 U' R U' R' U R' U R2 D'", note: "Последний G-случай.", visual: { type: "pll", kind: "g", blocks: ["back"], arrows: "cycle" } },
 ];
+
+const verifiedF2LSource = [
+  { n: 1, group: "Free Pairs", alg: "U R U' R'", fl: "lllllgllgllwgglggloollooloollwgglggloollooloo", alts: ["U R U' R'", "R' F R F'", "y' r' U' R U M'"] },
+  { n: 2, group: "Free Pairs", alg: "F R' F' R", fl: "llllllloolgggglgglwlllooloolgggglgglwlllooloo", alts: ["F R' F' R", "y' U' R' U R", "U' F' U F"] },
+  { n: 3, group: "Free Pairs", alg: "F' U' F", fl: "lllollllgllwgglgglolllooloollwgglgglolllooloo", alts: ["F' U' F", "y' R' U' R", "y L' U' L"] },
+  { n: 4, group: "Free Pairs", alg: "R U R'", fl: "lgllllllollggglgglwlllooloollggglgglwlllooloo", alts: ["R U R'", "y' f R f'", "y F U F'"] },
+  { n: 5, group: "Disconnected Pairs", alg: "U' R U R' U2 R U' R'", fl: "lgllllllgllwgglgglolllooloollwgglgglolllooloo", alts: ["U' R U R' U2 R U' R'", "F2 L' U' L U F2", "U' R U R' U' R U2 R'"] },
+  { n: 6, group: "Disconnected Pairs", alg: "U' r U' R' U R U r'", fl: "lllollllollggglgglwlllooloollggglgglwlllooloo", alts: ["U' r U' R' U R U r'", "y' U R' U' R U2 R' U R", "d R' U' R U2 R' U R"] },
+  { n: 7, group: "Disconnected Pairs", alg: "U' R U2 R' U' R U2 R'", fl: "lllgllllgllwgglgglolllooloollwgglgglolllooloo", alts: ["U' R U2 R' U' R U2 R'", "M' U' M U2 r U' r'", "U' R U2 R' U2 R U' R'"] },
+  { n: 8, group: "Disconnected Pairs", alg: "d R' U2 R U R' U2 R", fl: "lollllllollggglgglwlllooloollggglgglwlllooloo", alts: ["d R' U2 R U R' U2 R", "r' U2 R2 U R2 U r", "y' U R' U2 R U2 R' U R"] },
+  { n: 9, group: "Disconnected Pairs", alg: "U' R U' R' U F' U' F", fl: "lollllllgllwgglgglolllooloollwgglgglolllooloo", alts: ["U' R U' R' U F' U' F", "F R U R' U' F' R U' R'", "U' R U' R' d R' U' R"] },
+  { n: 10, group: "Disconnected Pairs", alg: "U' R U R' U R U R'", fl: "lllgllllollggglgglwlllooloollggglgglwlllooloo", alts: ["U' R U R' U R U R'", "U2 R U' R' U' R U R'", "d R' U R d' R U R'"] },
+  { n: 11, group: "Connected Pairs", alg: "U' R U2 R' U F' U' F", fl: "lllllollgllwgglgglogllooloollwgglgglogllooloo", alts: ["U' R U2 R' U F' U' F", "y' R U2 R2 U' R2 U' R'", "U' R U2 R' d R' U' R"] },
+  { n: 12, group: "Connected Pairs", alg: "R U' R' U R U' R' U2 R U' R'", fl: "lllllllgologgglgglwlllooloologgglgglwlllooloo", alts: ["R U' R' U R U' R' U2 R U' R'", "R' U2 R2 U R2 U R", "U R U' R' U' R U R' U' R U R'"] },
+  { n: 13, group: "Connected Pairs", alg: "y' U R' U R U' R' U' R", fl: "llllllloglgwgglgglolllooloolgwgglgglolllooloo", alts: ["y' U R' U R U' R' U' R", "M' U' R U R' U2 R U' r'", "R U' R' U R' F R F' R U' R'"] },
+  { n: 14, group: "Connected Pairs", alg: "U' R U' R' U R U R'", fl: "lllllgllollggglgglwollooloollggglgglwollooloo", alts: ["U' R U' R' U R U R'", "R U2 R' U2 R U R' U2 R U' R'", "U' R2 D R' U R D' R2"] },
+  { n: 15, group: "Connected Pairs", alg: "R' D' R U' R' D R U R U' R'", fl: "lllllllgglowgglgglolllooloolowgglgglolllooloo", alts: ["R' D' R U' R' D R U R U' R'", "M U r U' r' U' M'", "R U R' U2 R U' R' U R U' R'"] },
+  { n: 16, group: "Connected Pairs", alg: "R U' R' U2 F' U' F", fl: "lllllollollggglgglwgllooloollggglgglwgllooloo", alts: ["R U' R' U2 F' U' F", "R U' R' U2 y' R' U' R", "U M' U R U' r' U' R U R'"] },
+  { n: 17, group: "Connected Pairs", alg: "R U2 R' U' R U R'", fl: "lllllgllwllogglgglgollooloollogglgglgollooloo", alts: ["R U2 R' U' R U R'", "y2 L U2 L' U' L U L'", "R U R' U' R U2 R' U2 R U R'"] },
+  { n: 18, group: "Connected Pairs", alg: "y' R' U2 R U R' U' R", fl: "lllllllowlgogglgglglllooloolgogglgglglllooloo", alts: ["y' R' U2 R U R' U' R", "y L' U2 L U L' U' L", "F' U2 F U F' U' F"] },
+  { n: 19, group: "Disconnected Pairs", alg: "U R U2 R' U R U' R'", fl: "lgllllllwllogglgglglllooloollogglgglglllooloo", alts: ["U R U2 R' U R U' R'", "U R U2 R2 F R F'", "d f R2 f' U f R' f'"] },
+  { n: 20, group: "Disconnected Pairs", alg: "y' U' R' U2 R U' R' U R", fl: "lllollllwllogglgglglllooloollogglgglglllooloo", alts: ["y' U' R' U2 R U' R' U R", "U' R U' R2 F R F' R U' R'", "y U' L' U2 L U' L' U L"] },
+  { n: 21, group: "Disconnected Pairs", alg: "U2 R U R' U R U' R'", fl: "lllgllllwllogglgglglllooloollogglgglglllooloo", alts: ["U2 R U R' U R U' R'", "R U' R' U2 R U R'", "R B U2 B' R'"] },
+  { n: 22, group: "Disconnected Pairs", alg: "r U' r' U2 r U r'", fl: "lollllllwllogglgglglllooloollogglgglglllooloo", alts: ["r U' r' U2 r U r'", "F' L' U2 L F", "y' U2 R' U' R U' R' U R"] },
+  { n: 23, group: "Connected Pairs", alg: "U R U' R' U' R U' R' U R U' R'", fl: "lllllllgwloogglgglgllloolooloogglgglglllooloo", alts: ["U R U' R' U' R U' R' U R U' R'", "R U R' U2 R U R' U' R U R'", "U2 R2 U2 R' U' R U' R2"] },
+  { n: 24, group: "Connected Pairs", alg: "F U R U' R' F' R U' R'", fl: "lllllollwllogglgglggllooloollogglgglggllooloo", alts: ["F U R U' R' F' R U' R'", "U' R U R2 F R F' R U' R'", "y' R' U' R U2 R' U' R U R' U' R"] },
+  { n: 25, group: "Corner In Slot", alg: "U' R' F R F' R U R'", fl: "lllllgllllllgglggglollooooolllgglggglollooooo", alts: ["U' R' F R F' R U R'", "R' F' R U R U' R' F", "U' F' R U R' U' R' F R"] },
+  { n: 26, group: "Corner In Slot", alg: "U R U' R' F R' F' R", fl: "lllllllollglgglgggllllooooolglgglgggllllooooo", alts: ["U R U' R' F R' F' R", "R S' R' U R S R'", "U R U R' U' y L' U' L"] },
+  { n: 27, group: "Corner In Slot", alg: "R U' R' U R U' R'", fl: "lllllgllllllgglggwlolloogoolllgglggwlolloogoo", alts: ["R U' R' U R U' R'", "F' U' F U2 R U' R'", "y' f R' f' U f R' f'"] },
+  { n: 28, group: "Corner In Slot", alg: "R U R' U' F R' F' R", fl: "lllllllollglgglggolllloowoolglgglggolllloowoo", alts: ["R U R' U' F R' F' R", "y L' U L U' L' U L", "F' U F U' F' U F"] },
+  { n: 29, group: "Corner In Slot", alg: "R' F R F' U R U' R'", fl: "lllllllollglgglggwlllloogoolglgglggwlllloogoo", alts: ["R' F R F' U R U' R'", "y L' U' L U L' U' L", "y' R' U' R U R' U' R"] },
+  { n: 30, group: "Corner In Slot", alg: "R U R' U' R U R'", fl: "lllllgllllllgglggololloowoolllgglggololloowoo", alts: ["R U R' U' R U R'", "U' R U2 R' U2 R U R'", "U' F R' F' R2 U R'"] },
+  { n: 31, group: "Edge In Slot", alg: "U' R' F R F' R U' R'", fl: "llllllllwlloggogglgllgooloolloggogglgllgooloo", alts: ["U' R' F R F' R U' R'", "R U' R' U y' R' U R", "F' U F R U2 R'"] },
+  { n: 32, group: "Edge In Slot", alg: "U R U' R' U R U' R' U R U' R'", fl: "llllllllwlloggggglglloooloolloggggglglloooloo", alts: ["U R U' R' U R U' R' U R U' R'", "R U R' U' R U R' U' R U R'", "R2 U R2 U R2 U2 R2"] },
+  { n: 33, group: "Edge In Slot", alg: "U' R U' R' U2 R U' R'", fl: "llllllllgllwggggglolloooloollwggggglolloooloo", alts: ["U' R U' R' U2 R U' R'", "y R' D R U' R' D' R", "R U R' U' R U' R' U R U' R'"] },
+  { n: 34, group: "Edge In Slot", alg: "U R U R' U2 R U R'", fl: "llllllllollgggggglwlloooloollgggggglwlloooloo", alts: ["U R U R' U2 R U R'", "U' R U2 R' U R U R'", "U R' D' R U' R' D R"] },
+  { n: 35, group: "Edge In Slot", alg: "U' R U R' U F' U' F", fl: "llllllllgllwggogglollgooloollwggogglollgooloo", alts: ["U' R U R' U F' U' F", "U' R U R' d R' U' R", "U2 R U R' F R' F' R"] },
+  { n: 36, group: "Edge In Slot", alg: "U F' U' F U' R U R'", fl: "llllllllollgggogglwllgooloollgggogglwllgooloo", alts: ["U F' U' F U' R U R'", "U2 R' F R F' U2 R U R'", "R2 u R U R' U' u' R' U R'"] },
+  { n: 37, group: "Pieces In Slot", alg: "R2 U2 F R2 F' U2 R' U R'", fl: "llllllllllllggoggglllgooooolllggoggglllgooooo", alts: ["R2 U2 F R2 F' U2 R' U R'", "R' F R F' R U' R' U R U' R' U2 R U' R'", "R U2 R' U R U2 R' U F' U' F"] },
+  { n: 38, group: "Pieces In Slot", alg: "R U' R' U' R U R' U2 R U' R'", fl: "llllllllllllgggggwlllooogoolllgggggwlllooogoo", alts: ["R U' R' U' R U R' U2 R U' R'", "R U R' U' R U2 R' U' R U R'", "R2 U2 R' U' R U' R' U2 R'"] },
+  { n: 39, group: "Pieces In Slot", alg: "R U' R' U R U2 R' U R U' R'", fl: "llllllllllllgggggolllooowoolllgggggolllooowoo", alts: ["R U' R' U R U2 R' U R U' R'", "R U2 R U R' U R U2 R2", "R U R' U2 R U' R' U R U R'"] },
+  { n: 40, group: "Pieces In Slot", alg: "r U' r' U2 r U r' R U R'", fl: "llllllllllllggoggwlllgoogoolllggoggwlllgoogoo", alts: ["r U' r' U2 r U r' R U R'", "F' L' U2 L F R U R'", "R U' R' F R U R' U' F' R U' R'"] },
+  { n: 41, group: "Pieces In Slot", alg: "R U' R' r U' r' U2 r U r'", fl: "llllllllllllggoggolllgoowoolllggoggolllgoowoo", alts: ["R U' R' r U' r' U2 r U r'", "R U' R' F' L' U2 L F", "R U R' U' y M U' R' F R U M'"] },
+];
+
+const verifiedF2LGroupNames = {
+  "Free Pairs": "Свободные пары",
+  "Disconnected Pairs": "Раздельные пары",
+  "Connected Pairs": "Собранные пары",
+  "Corner In Slot": "Угол в слоте",
+  "Edge In Slot": "Ребро в слоте",
+  "Pieces In Slot": "Оба в слоте",
+};
+
+function f2lLevelByPosition(position) {
+  if (position <= 8) return "start";
+  if (position <= 18) return "more";
+  return "all";
+}
+
+function f2lAttrsForSource(group, mirror = false) {
+  const map = {
+    "Free Pairs": { corner: "top", white: "side", edge: "top", pair: "ready" },
+    "Disconnected Pairs": { corner: "top", white: "side", edge: "top", pair: "separate" },
+    "Connected Pairs": { corner: "top", white: "side", edge: "top", pair: "ready" },
+    "Corner In Slot": { corner: "slot", white: "slot", edge: "top", pair: "separate" },
+    "Edge In Slot": { corner: "top", white: "side", edge: "slot", pair: "separate" },
+    "Pieces In Slot": { corner: "slot", white: "slot", edge: "slot", pair: "wrong" },
+  };
+  return { ...(map[group] || map["Disconnected Pairs"]), slot: mirror ? "left" : "right" };
+}
+
+function sourceCaseName(source) {
+  const special = {
+    2: "F2L 2 · вставка через F",
+    3: "F2L 3 · короткая вставка через F",
+    4: "F2L 4 · короткая вставка через R",
+  };
+  return special[source.n] || `F2L ${source.n}`;
+}
+
+function applyVerifiedF2LData() {
+  const f2lItems = algorithms.filter((item) => item.stage === "F2L");
+  const first = verifiedF2LSource[0];
+  const verifiedCases = [
+    {
+      source: first,
+      name: "Правая вставка",
+      group: "База",
+      alg: first.alg,
+      note: "Проверенная схема SpeedCubeDB F2L 1: белая наклейка угла смотрит сбоку, не сверху.",
+      mirror: false,
+      attrs: f2lAttrsForSource(first.group, false),
+    },
+    {
+      source: first,
+      name: "Левая вставка",
+      group: "База",
+      alg: "U' L' U L",
+      note: "Зеркало правой вставки: тот же случай, но в левый передний слот.",
+      mirror: true,
+      attrs: f2lAttrsForSource(first.group, true),
+    },
+    ...verifiedF2LSource.slice(1).map((source) => ({
+      source,
+      name: sourceCaseName(source),
+      group: verifiedF2LGroupNames[source.group] || source.group,
+      alg: source.alg,
+      note: `Проверенный случай SpeedCubeDB F2L ${source.n}. Серое не важно; цветные наклейки сравни со своим кубиком.`,
+      mirror: false,
+      attrs: f2lAttrsForSource(source.group, false),
+    })),
+  ];
+
+  verifiedCases.forEach((entry, index) => {
+    const item = f2lItems[index];
+    if (!item) return;
+    Object.assign(item, {
+      level: f2lLevelByPosition(index + 1),
+      name: entry.name,
+      group: entry.group,
+      alg: entry.alg,
+      note: entry.note,
+      visual: {
+        type: "f2l-source",
+        fl: entry.source.fl,
+        scdb: entry.source.n,
+        mirror: entry.mirror,
+        sourceGroup: entry.source.group,
+        attrs: entry.attrs,
+        alts: entry.source.alts,
+      },
+    });
+  });
+}
+
+applyVerifiedF2LData();
 
 const state = {
   view: "home",
@@ -411,7 +548,7 @@ function putStickerSet(fills, stickers = {}) {
 }
 
 function f2lCornerStickers(position, colors, visual = {}) {
-  const readyFRCorner = { U22: colors.down, F02: colors.front, R02: colors.side };
+  const readyFRCorner = { U22: colors.front, F02: colors.down, R02: colors.side };
   const visible = {
     UFR: visual.pair ? readyFRCorner : { U22: colors.down, F02: colors.front, R02: colors.side },
     UFL: { U20: colors.down, F00: colors.front },
@@ -532,6 +669,46 @@ function f2lSvg(visual, options = {}) {
   `;
 }
 
+function sourceF2LSvg(visual, options = {}) {
+  const raw = String(visual.fl || "").slice(0, 27).padEnd(27, "l");
+  const sideColor = visual.mirror ? COLORS.L : COLORS.R;
+  const colorByCode = {
+    g: COLORS.F,
+    o: sideColor,
+    w: COLORS.D,
+    y: COLORS.U,
+    r: COLORS.R,
+    b: COLORS.B,
+  };
+  const fills = {};
+  ["U", "F", "R"].forEach((face, faceIndex) => {
+    for (let index = 0; index < 9; index += 1) {
+      const code = raw[faceIndex * 9 + index];
+      if (code && code !== "l" && colorByCode[code]) {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        fills[`${face}${row}${col}`] = colorByCode[code];
+      }
+    }
+  });
+  const cubeTransform = visual.mirror ? `transform="translate(330 0) scale(-1 1)"` : "";
+  return `
+    <svg class="cube-svg f2l-example-svg source-f2l-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L ${visual.scdb ? `из SpeedCubeDB ${visual.scdb}` : ""}: цветная схема случая">
+      <defs>
+        <filter id="softShadowSourceF2L" x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#17202a" flood-opacity="0.14"/>
+        </filter>
+      </defs>
+      <g filter="url(#softShadowSourceF2L)" ${cubeTransform}>
+        ${faceTilesDetailed("U", fills)}
+        ${faceTilesDetailed("F", fills)}
+        ${faceTilesDetailed("R", fills)}
+      </g>
+      ${visual.mirror ? `<text x="165" y="276" text-anchor="middle" class="svg-note">зеркало правой вставки</text>` : ""}
+    </svg>
+  `;
+}
+
 function ollSvg(visual) {
   const sideSet = new Set(visual.sides || []);
   const topCell = (index) => {
@@ -610,6 +787,7 @@ function pllSvg(visual) {
 function visualSvg(item, options = {}) {
   if (item.visual?.type === "oll") return ollSvg(item.visual);
   if (item.visual?.type === "pll") return pllSvg(item.visual);
+  if (item.visual?.type === "f2l-source") return sourceF2LSvg(item.visual, options);
   return f2lSvg(item.visual || {}, options);
 }
 
@@ -719,20 +897,20 @@ function renderActionGuide(item) {
 function firstF2LTimeline(item) {
   if (item.id !== "f2l-1") return "";
   const frames = [
-    ["Старт", "Пара уже сверху. Зелёный центр спереди, красный справа, слот пустой.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
-    ["U", "Уводим пару верхним слоем, чтобы правый слот не был закрыт.", { type: "f2l", slot: "FR", corner: "UBR", edge: "UB", pair: true }],
-    ["R", "Правая грань поднимается: место для пары открыто.", { type: "f2l", slot: "FR", corner: "UR", edge: "UB", pair: true }],
-    ["U'", "Пара возвращается над открытое место.", { type: "f2l", slot: "FR", corner: "UFR", edge: "UR", pair: true }],
-    ["R'", "Правая грань опускается, пара оказывается в слоте.", { type: "f2l", slot: "FR", corner: "FR", edge: "FR", pair: true }],
+    ["Старт", "Сравни именно эту картинку: белая наклейка угла сбоку, цвет пары сверху.", "source"],
+    ["U", "Верхний слой уводит пару в сторону, чтобы правый слот можно было открыть.", "move"],
+    ["R", "Правая грань поднимается. Ты временно открываешь место для пары.", "move"],
+    ["U'", "Верхний слой возвращает пару к открытому месту.", "move"],
+    ["R'", "Правая грань возвращается вниз, и пара уходит в слот.", "goal"],
   ];
   return `
     <section class="case-section">
       <div class="case-section-heading"><p class="eyebrow">Правая вставка по кадрам</p><h3>Зачем нужен каждый ход</h3></div>
       <div class="timeline-grid">
-        ${frames.map(([move, text, visual], index) => `
+        ${frames.map(([move, text, kind], index) => `
           <article class="timeline-card">
             <span>${index + 1}</span>
-            ${f2lSvg(visual, { compact: true, flat: true })}
+            ${kind === "source" ? sourceF2LSvg(item.visual, { compact: true }) : kind === "goal" ? slotGoalSvg(item) : `<div class="move-card-badge">${move}</div>`}
             <h4>${move}</h4>
             <p>${text}</p>
           </article>`).join("")}
@@ -785,6 +963,7 @@ function levelsForStage(stage) {
 
 function f2lAttributes(item) {
   const visual = item.visual || {};
+  if (visual.type === "f2l-source" && visual.attrs) return visual.attrs;
   const corner = visual.corner || "";
   const edge = visual.edge || "";
   const inSlot = (value) => ["FR", "FL", "BR", "BL"].includes(value);
@@ -820,6 +999,16 @@ function positionPhrase(value, kind = "corner") {
 function f2lMiniFacts(item) {
   if (item.stage !== "F2L") return "";
   const visual = item.visual || {};
+  if (visual.type === "f2l-source") {
+    const group = verifiedF2LGroupNames[visual.sourceGroup] || visual.sourceGroup || "F2L";
+    const slot = visual.mirror ? "левый слот" : "правый слот";
+    return `
+      <p class="mini-recognition" aria-label="Короткое распознавание F2L-случая">
+        <span>SpeedCubeDB F2L ${visual.scdb}</span>
+        <span>${group}</span>
+        <span>${slot}</span>
+      </p>`;
+  }
   const attrs = f2lAttributes(item);
   const corner = attrs.corner === "slot" ? "угол в слоте" : attrs.white === "up" ? "угол белым вверх" : "угол сверху";
   const edge = attrs.edge === "slot" ? "ребро в слоте" : "ребро сверху";
@@ -904,6 +1093,28 @@ function slotGoalSvg(item) {
 function renderF2LRecognitionBoard(item) {
   if (item.stage !== "F2L") return "";
   const visual = item.visual || {};
+  if (visual.type === "f2l-source") {
+    const group = verifiedF2LGroupNames[visual.sourceGroup] || visual.sourceGroup || "F2L";
+    const alternatives = (visual.alts || []).slice(1, 3);
+    return `
+      <section class="case-section recognition-board">
+        <div class="case-section-heading">
+          <p class="eyebrow">Как распознать</p>
+          <h3>Сравни цветные наклейки со схемой из базы</h3>
+        </div>
+        <div class="recognition-grid">
+          <article>
+            ${sourceF2LSvg(visual)}
+            <p><b>Случай:</b> SpeedCubeDB F2L ${visual.scdb}. <b>Группа:</b> ${group}. Серые наклейки не важны, цветные показывают то, что надо найти.</p>
+          </article>
+          <article>
+            ${slotGoalSvg({ visual: { slot: visual.mirror ? "FL" : "FR" } })}
+            <p><b>Слот:</b> ${visual.mirror ? "левый передний" : "правый передний"}. Если твой случай повернут иначе, поверни U или весь куб так, чтобы совпали цветные наклейки.</p>
+            ${alternatives.length ? `<p><b>Другие проверенные варианты:</b> ${alternatives.join(" · ")}</p>` : ""}
+          </article>
+        </div>
+      </section>`;
+  }
   return `
     <section class="case-section recognition-board">
       <div class="case-section-heading">
@@ -1088,7 +1299,7 @@ function crossSvg() {
   const dim = "var(--cube-muted)";
   const sticker = (x, y, fill, active = false) =>
     `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.28}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>`;
-  const face = (x, y, faceColor, activeCells = []) => {
+  const face = (x, y, faceColor, activeCells = [], label = "") => {
     const activeSet = new Set(activeCells.map(([r, c]) => `${r}${c}`));
     const tiles = [];
     for (let r = 0; r < 3; r += 1) {
@@ -1101,6 +1312,7 @@ function crossSvg() {
       <g>
         <rect x="${x - 7}" y="${y - 7}" width="${faceSize + 14}" height="${faceSize + 14}" rx="14" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="3"/>
         ${tiles.join("")}
+        ${label ? `<text x="${x + faceSize / 2}" y="${y + faceSize + 25}" text-anchor="middle" class="svg-mini-label">${label}</text>` : ""}
       </g>`;
   };
   const whiteFace = (x, y) => {
@@ -1117,21 +1329,14 @@ function crossSvg() {
         ${tiles.join("")}
       </g>`;
   };
-  const whiteBridge = (x, y, w, h) =>
-    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="2.5"/>`;
   return `
     <svg class="cross-svg cross-net-svg" viewBox="0 0 520 520" role="img" aria-label="Правильно собранный белый крест: белые ребра и совпадающие боковые центры">
-      <text x="260" y="28" text-anchor="middle" class="svg-note">белый крест + совпадение с центрами</text>
-      ${face(198, 52, COLORS.F, [[2, 1]])}
-      ${face(344, 198, COLORS.R, [[1, 0]])}
-      ${face(198, 344, COLORS.B, [[0, 1]])}
-      ${face(52, 198, COLORS.L, [[1, 2]])}
+      <text x="260" y="28" text-anchor="middle" class="svg-note">пять видимых граней правильного белого креста</text>
+      ${face(198, 52, COLORS.F, [[2, 1]], "зелёный центр")}
+      ${face(344, 198, COLORS.R, [[1, 0]], "красный центр")}
+      ${face(198, 344, COLORS.B, [[0, 1]], "синий центр")}
+      ${face(52, 198, COLORS.L, [[1, 2]], "оранжевый центр")}
       ${whiteFace(198, 198)}
-      ${whiteBridge(242, 181, 36, 14)}
-      ${whiteBridge(325, 242, 14, 36)}
-      ${whiteBridge(242, 325, 36, 14)}
-      ${whiteBridge(181, 242, 14, 36)}
-      <text x="260" y="494" text-anchor="middle" class="svg-note">цветная наклейка ребра совпадает с центром</text>
     </svg>`;
 }
 
@@ -1233,6 +1438,10 @@ function renderF2LWizard() {
 
 function renderCaseFacts(item) {
   if (item.stage !== "F2L") return "";
+  if (item.visual?.type === "f2l-source") {
+    const group = verifiedF2LGroupNames[item.visual.sourceGroup] || item.visual.sourceGroup || "F2L";
+    return `<p class="case-orientation">Схема и основная формула сверены со SpeedCubeDB: F2L ${item.visual.scdb}, группа “${group}”. Серое игнорируй, цветные наклейки сравни с кубиком.</p>`;
+  }
   const colors = slotPalette(item.visual?.slot || "FR");
   return `<p class="case-orientation">На схеме пример одного слота: белый снизу, ${colors.frontColorName} спереди, ${colors.sideColorName} ${colors.sideName === "правая" ? "справа" : "слева"}. Цвета ищи прямо на кубике, без отдельных плашек.</p>`;
 }
