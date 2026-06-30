@@ -1271,11 +1271,18 @@ function renderHoldOrientation(item) {
     const colors = slotPalette(left ? "FL" : "FR");
     const sideText = left ? "оранжевую сторону" : "красную сторону";
     const sideShown = left ? "оранжевая сторона" : "красная сторона";
+    const sideLabel = left ? "Слева" : "Справа";
     return `
       <div class="hold-orientation">
         <div class="hold-copy">
           <p class="study-label">Как держать кубик</p>
           <h3>${left ? "Смотри на левую сторону слота" : "Смотри на правую сторону слота"}</h3>
+          <div class="hold-tags" aria-label="Цвета ориентации кубика">
+            <span><i style="background:${COLORS.U}"></i>Верх: жёлтый</span>
+            <span><i style="background:${COLORS.F}"></i>Перед: зелёный</span>
+            <span><i style="background:${left ? COLORS.L : COLORS.R}"></i>${sideLabel}: ${colors.sideColorName}</span>
+            <span><i style="background:${COLORS.D}"></i>Низ: белый</span>
+          </div>
           <p>Перед формулой держи ${colors.frontColorName} центр перед собой, а ${sideText} — ${left ? "слева" : "справа"}. На рисунке отдельно показана именно эта ${sideShown}, чтобы не путаться в 3D.</p>
           <p>${left ? "Белая наклейка угла должна быть сверху-справа на этой стороне." : "Белая наклейка угла должна быть сверху-слева на этой стороне."} Две цветные наклейки по центру показывают собранный ориентир после правильного белого креста.</p>
         </div>
