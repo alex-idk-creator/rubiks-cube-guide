@@ -506,7 +506,8 @@ function frontArrow(face, dir) {
     : arrow("M94 150 C104 108 150 88 190 108 C230 128 238 178 214 210");
 }
 
-function notationSvg(item) {
+function notationSvg(item, options = {}) {
+  const compact = Boolean(options.compact);
   const colorByFace = {
     R: COLORS.R,
     Rw: COLORS.R,
@@ -535,7 +536,7 @@ function notationSvg(item) {
     cube: "весь кубик",
   }[face];
   return `
-    <svg class="notation-svg" viewBox="0 0 332 286" role="img" aria-label="Ход ${item.move}: ${faceLabel}">
+    <svg class="notation-svg ${compact ? "mini-notation-svg" : ""}" viewBox="${compact ? "0 30 332 236" : "0 0 332 286"}" role="img" aria-label="Ход ${item.move}: ${faceLabel}">
       <defs>
         <marker id="frontArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--arrow-fill)" stroke="var(--arrow-outline)" stroke-width="1.4"></path>
@@ -551,10 +552,43 @@ function notationSvg(item) {
         return frontCell(row, col, active ? highlight : COLORS.F, active || face === "F" || face === "cube");
       }).join("")}
       ${frontArrow(face, item.dir)}
-      <text x="166" y="20" text-anchor="middle" class="svg-note">передняя грань смотрит на тебя</text>
-      <text x="166" y="274" text-anchor="middle" class="svg-note">${faceLabel}: ${item.dir === "ccw" ? "обратно" : item.dir === "double" ? "два раза" : "по стрелке"}</text>
+      ${compact ? "" : `<text x="166" y="20" text-anchor="middle" class="svg-note">передняя грань смотрит на тебя</text>
+      <text x="166" y="274" text-anchor="middle" class="svg-note">${faceLabel}: ${item.dir === "ccw" ? "обратно" : item.dir === "double" ? "два раза" : "по стрелке"}</text>`}
     </svg>
   `;
+}
+
+function notationForToken(token) {
+  const clean = token.replace(/[()]/g, "");
+  const exact = notation.find((item) => item.move === clean);
+  if (exact) return exact;
+
+  const isDouble = clean.endsWith("2");
+  const isPrime = clean.endsWith("'");
+  const base = clean.replace(/2|'$/g, "");
+  const baseByMove = {
+    R: { title: "Правая грань", face: "R" },
+    L: { title: "Левая грань", face: "L" },
+    U: { title: "Верхний слой", face: "U" },
+    D: { title: "Нижний слой", face: "D" },
+    F: { title: "Передняя грань", face: "F" },
+    B: { title: "Задняя грань", face: "B" },
+    M: { title: "Средний слой", face: "M" },
+    r: { title: "Широкий R", face: "Rw" },
+    d: { title: "Широкий D", face: "Dw" },
+    x: { title: "Поворот x", face: "cube" },
+    y: { title: "Поворот y", face: "cube" },
+    z: { title: "Поворот z", face: "cube" },
+  }[base];
+
+  if (!baseByMove) return null;
+  return {
+    move: clean,
+    title: `${baseByMove.title}${isDouble ? " на 180" : isPrime ? " обратно" : ""}`,
+    face: baseByMove.face,
+    dir: baseByMove.face === "cube" ? "turn" : isDouble ? "double" : isPrime ? "ccw" : "cw",
+    text: moveMeaning(clean),
+  };
 }
 
 function slotPalette(slot = "FR") {
@@ -1188,6 +1222,100 @@ function firstF2LTimeline(item) {
     </section>`;
 }
 
+function f2lDetailIsLeft(item) {
+  const visual = item.visual || {};
+  if (visual.type === "f2l-source") return Boolean(visual.mirror);
+  return String(visual.slot || "FR").includes("L");
+}
+
+function holdF2LSvg(item) {
+  const left = f2lDetailIsLeft(item);
+  const colors = slotPalette(left ? "FL" : "FR");
+  const sideColor = left ? COLORS.L : COLORS.R;
+  const fills = {
+    U11: COLORS.U,
+    F11: COLORS.F,
+    F21: COLORS.F,
+    R11: sideColor,
+    R21: sideColor,
+  };
+  const cubeTransform = left ? `transform="translate(330 0) scale(-1 1)"` : "";
+  const sideText = left ? "оранжевый слева" : "красный справа";
+  return `
+    <svg class="hold-cube-svg" viewBox="0 0 330 292" role="img" aria-label="Как держать кубик: ${colors.frontColorName} спереди, ${sideText}, белый снизу">
+      <defs>
+        <filter id="holdShadow" x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#17202a" flood-opacity="0.12"/>
+        </filter>
+      </defs>
+      <g filter="url(#holdShadow)" ${cubeTransform}>
+        ${faceTilesDetailed("U", fills)}
+        ${faceTilesDetailed("F", fills)}
+        ${faceTilesDetailed("R", fills)}
+      </g>
+    </svg>`;
+}
+
+function renderHoldOrientation(item) {
+  if (item.stage === "F2L") {
+    const left = f2lDetailIsLeft(item);
+    const colors = slotPalette(left ? "FL" : "FR");
+    return `
+      <div class="hold-orientation">
+        <div class="hold-copy">
+          <p class="study-label">Как держать кубик</p>
+          <h3>${left ? "Слот спереди слева" : "Слот спереди справа"}</h3>
+          <p>Поверни кубик так, чтобы ${colors.frontColorName} центр смотрел на тебя, а ${colors.sideColorName} был ${left ? "слева" : "справа"}. Белая сторона остается снизу, желтая сверху.</p>
+          <p>Цветные наклейки под центрами показывают уже собранный ориентир после правильного белого креста.</p>
+        </div>
+        ${holdF2LSvg(item)}
+      </div>`;
+  }
+  if (item.stage === "OLL") {
+    return `
+      <div class="hold-orientation">
+        <div class="hold-copy">
+          <p class="study-label">Как держать кубик</p>
+          <h3>Жёлтый крест сверху</h3>
+          <p>Поверни верхний слой, пока рисунок углов совпадет со схемой. Ориентир: ${item.visual?.hold || "сравни боковые жёлтые наклейки"}.</p>
+        </div>
+        <div class="hold-ll-preview">${visualSvg(item)}</div>
+      </div>`;
+  }
+  return `
+    <div class="hold-orientation">
+      <div class="hold-copy">
+        <p class="study-label">Как держать кубик</p>
+        <h3>Жёлтый верх уже собран</h3>
+        <p>Держи готовый блок в том же месте, что на схеме. Если блока нет, ориентируйся по стрелкам перестановки.</p>
+      </div>
+      <div class="hold-ll-preview">${visualSvg(item)}</div>
+    </div>`;
+}
+
+function renderMoveVisualSteps(item) {
+  const moveTokens = tokens(item.alg);
+  return `
+    <section class="case-section move-visual-section">
+      <div class="case-section-heading">
+        <p class="eyebrow">Ходы руками</p>
+        <h3>Каждая буква с мини-схемой</h3>
+        <p>Передняя грань на этих схемах смотрит прямо на тебя. Сверяй стрелку под ходом, если буквы пока путаются.</p>
+      </div>
+      <div class="move-step-grid ${moveTokens.length > 14 ? "dense" : ""}">
+        ${moveTokens.map((token, index) => {
+          const moveItem = notationForToken(token);
+          return `
+            <article class="move-step-card">
+              <div class="move-step-head"><span>${index + 1}</span><strong>${token}</strong></div>
+              <div class="move-step-visual">${moveItem ? notationSvg(moveItem, { compact: true }) : `<div class="move-step-fallback">${token}</div>`}</div>
+              <p>${moveMeaning(token)}</p>
+            </article>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
 function renderCaseDetail(item) {
   const previous = state.returnAnchor || item.id;
   return `
@@ -1203,6 +1331,7 @@ function renderCaseDetail(item) {
           <h2>${item.name}</h2>
           <p>${item.note}</p>
           ${renderCaseFacts(item)}
+          ${renderHoldOrientation(item)}
           <p class="study-label">Формула</p>
           ${algorithmHtml(item)}
           <button class="copy-button" data-copy="${item.alg}">Копировать формулу</button>
@@ -1210,6 +1339,7 @@ function renderCaseDetail(item) {
       </div>
       ${renderF2LRecognitionBoard(item)}
       ${firstF2LTimeline(item)}
+      ${renderMoveVisualSteps(item)}
       ${renderActionGuide(item)}
     </section>`;
 }
