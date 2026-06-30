@@ -681,6 +681,15 @@ function sourceStickerMap(visual) {
   return map;
 }
 
+function f2lSlotSeedCells(group) {
+  const cellsByGroup = {
+    "Corner In Slot": ["F22", "R22"],
+    "Edge In Slot": ["F12", "R12"],
+    "Pieces In Slot": ["F12", "R12", "F22", "R22"],
+  };
+  return cellsByGroup[group] || [];
+}
+
 function physicalF2LFills(visual) {
   const rawMap = sourceStickerMap(visual);
   const fills = {
@@ -693,6 +702,9 @@ function physicalF2LFills(visual) {
   const seedCells = new Set();
   Object.entries(rawMap).forEach(([cell, sticker]) => {
     if (cell.startsWith("U") || sticker.code === "w") seedCells.add(cell);
+  });
+  f2lSlotSeedCells(visual.sourceGroup).forEach((cell) => {
+    if (rawMap[cell]) seedCells.add(cell);
   });
   visibleCubies.forEach((cubie) => {
     if (!cubie.some((cell) => seedCells.has(cell))) return;
