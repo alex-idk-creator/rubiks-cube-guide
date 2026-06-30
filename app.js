@@ -55,9 +55,9 @@ const notation = [
   { move: "r'", title: "Широкий R обратно", face: "Rw", dir: "ccw", text: "Два правых слоя идут обратно." },
   { move: "d", title: "Широкий D", face: "Dw", dir: "cw", text: "Крути нижний слой вместе со средним горизонтальным слоем." },
   { move: "d'", title: "Широкий D обратно", face: "Dw", dir: "ccw", text: "Два нижних слоя идут обратно." },
-  { move: "x", title: "Поворот x", face: "cube", dir: "turn", text: "Поверни весь куб как ход R: это смена хвата, не формула грани." },
-  { move: "y", title: "Поворот y", face: "cube", dir: "turn", text: "Поверни весь куб вокруг вертикальной оси, как верхний слой U." },
-  { move: "z", title: "Поворот z", face: "cube", dir: "turn", text: "Поверни весь куб вокруг передней оси, как ход F." },
+  { move: "x", title: "Поворот x", face: "cube", dir: "turn-cw", text: "Поверни весь куб как ход R: это смена хвата, не формула грани." },
+  { move: "y", title: "Поворот y", face: "cube", dir: "turn-cw", text: "Поверни весь куб вокруг вертикальной оси, как верхний слой U." },
+  { move: "z", title: "Поворот z", face: "cube", dir: "turn-cw", text: "Поверни весь куб вокруг передней оси, как ход F." },
 ];
 
 const lessons = [
@@ -107,7 +107,10 @@ const finderOptions = {
   ],
   PLL: [
     { id: "pll-edges", label: "Только ребра", text: "углы уже стоят правильно", match: (item) => item.stage === "PLL" && item.group.includes("Только ребра") },
-    { id: "pll-block", label: "Есть готовый блок", text: "собранная сторона или пара", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).some((block) => !["none", "corners", "edges"].includes(block)) },
+    { id: "pll-block-back", label: "Блок сзади", text: "готовая полоса сверху сзади", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("back") },
+    { id: "pll-block-front", label: "Блок спереди", text: "готовая полоса смотрит на тебя", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("front") },
+    { id: "pll-block-left", label: "Блок слева", text: "готовая полоса слева", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("left") },
+    { id: "pll-block-right", label: "Блок справа", text: "готовая полоса справа", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("right") },
     { id: "pll-corners", label: "Проблема с углами", text: "ребра не главное", match: (item) => item.stage === "PLL" && item.group.includes("Углы") },
     { id: "pll-no-block", label: "Блоков нет", text: "диагональные случаи", match: (item) => item.stage === "PLL" && (item.visual?.blocks || []).includes("none") },
   ],
@@ -419,7 +422,7 @@ function arrowPath(face, dir) {
   const common = `fill="none" stroke="${COLORS.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"`;
   if (dir === "double") return `<path d="M236 92 C286 126 286 188 236 218" ${common}/><path d="M66 218 C18 178 20 120 70 92" ${common}/><text x="150" y="158" text-anchor="middle" class="svg-label">180°</text>`;
   if (dir === "turn") return `<path d="M70 94 C120 24 236 42 264 110" ${common}/><path d="M248 232 C190 290 82 250 54 178" ${common}/>`;
-  const reverse = dir === "ccw";
+  const reverse = dir === "ccw" || dir === "turn-ccw";
   if (face === "U") return reverse ? `<path d="M238 66 C188 24 102 28 66 72" ${common}/>` : `<path d="M66 72 C118 24 204 28 238 66" ${common}/>`;
   if (face === "R") return reverse ? `<path d="M276 108 C306 164 292 222 248 258" ${common}/>` : `<path d="M248 258 C292 222 306 164 276 108" ${common}/>`;
   if (face === "F") return reverse ? `<path d="M54 122 C26 168 40 226 88 258" ${common}/>` : `<path d="M88 258 C40 226 26 168 54 122" ${common}/>`;
@@ -509,7 +512,11 @@ function frontArrow(face, dir) {
   if (face === "U") return reverse ? arrow("M222 74 L110 74") : arrow("M110 74 L222 74");
   if (face === "D" || face === "Dw") return reverse ? arrow("M110 190 L222 190") : arrow("M222 190 L110 190");
   if (face === "M") return arrow(reverse ? "M166 82 L166 184" : "M166 184 L166 82");
-  if (face === "cube") return `${arrow("M74 216 C48 154 70 74 126 54")}${arrow("M256 54 C286 118 264 198 204 220")}`;
+  if (face === "cube") {
+    return reverse
+      ? `${arrow("M126 54 C70 74 48 154 74 216")}${arrow("M204 220 C264 198 286 118 256 54")}`
+      : `${arrow("M74 216 C48 154 70 74 126 54")}${arrow("M256 54 C286 118 264 198 204 220")}`;
+  }
   return reverse
     ? arrow("M214 90 C238 122 230 172 190 192 C150 212 104 192 94 150")
     : arrow("M94 150 C104 108 150 88 190 108 C230 128 238 178 214 210");
@@ -595,7 +602,7 @@ function notationForToken(token) {
     move: clean,
     title: `${baseByMove.title}${isDouble ? " на 180" : isPrime ? " обратно" : ""}`,
     face: baseByMove.face,
-    dir: baseByMove.face === "cube" ? "turn" : isDouble ? "double" : isPrime ? "ccw" : "cw",
+    dir: baseByMove.face === "cube" ? isDouble ? "double" : isPrime ? "turn-ccw" : "turn-cw" : isDouble ? "double" : isPrime ? "ccw" : "cw",
     text: moveMeaning(clean),
   };
 }
@@ -1104,8 +1111,12 @@ function visualSvg(item, options = {}) {
   return f2lSvg(item.visual || {}, options);
 }
 
+function algorithmStringHtml(alg, hidden = false) {
+  return `<div class="algorithm ${hidden ? "hidden-alg" : ""}">${tokens(alg).map((token) => `<span class="token">${token}</span>`).join("")}</div>`;
+}
+
 function algorithmHtml(item, hidden = false) {
-  return `<div class="algorithm ${hidden ? "hidden-alg" : ""}">${tokens(item.alg).map((token) => `<span class="token">${token}</span>`).join("")}</div>`;
+  return algorithmStringHtml(item.alg, hidden);
 }
 
 function moveMeaning(token) {
@@ -1131,12 +1142,19 @@ function moveMeaning(token) {
     M2: "средний слой два раза",
     x: "поверни весь куб",
     "x'": "поверни весь куб обратно",
+    x2: "поверни весь куб на 180°",
     y: "поверни весь куб по U",
     "y'": "поверни весь куб обратно",
+    y2: "поверни весь куб на 180°",
+    z: "поверни весь куб как F",
+    "z'": "поверни весь куб обратно",
+    z2: "поверни весь куб на 180°",
     r: "правая широкая грань",
     "r'": "правая широкая обратно",
+    r2: "правая широкая грань два раза",
     d: "нижние два слоя",
     "d'": "нижние два слоя обратно",
+    d2: "нижние два слоя два раза",
   };
   return map[clean] || "сделай ход как в разделе Буквы";
 }
@@ -1334,6 +1352,30 @@ function renderMoveVisualSteps(item) {
     </section>`;
 }
 
+function renderFormulaAlternatives(item) {
+  const knownAlgorithm = (alg) => tokens(alg).every((token) => notationForToken(token));
+  const alternatives = item.visual?.type === "f2l-source"
+    ? [...new Set([item.alg, ...(item.visual.alts || [])])].filter(knownAlgorithm).slice(0, 4)
+    : [];
+  if (alternatives.length <= 1) return "";
+  return `
+    <section class="case-section formula-check-section">
+      <div class="case-section-heading">
+        <p class="eyebrow">Проверка формулы</p>
+        <h3>Основная формула и проверенные варианты</h3>
+        <p>Если ход не сработал, сначала проверь “Как держать кубик”. Если ориентация другая, попробуй один из вариантов из той же базы F2L.</p>
+      </div>
+      <div class="formula-variant-grid">
+        ${alternatives.map((alg, index) => `
+          <article class="formula-variant ${index === 0 ? "primary" : ""}">
+            <span>${index === 0 ? "Основная" : `Вариант ${index}`}</span>
+            ${algorithmStringHtml(alg)}
+            <button class="copy-button formula-copy-button" data-copy="${alg}">Копировать</button>
+          </article>`).join("")}
+      </div>
+    </section>`;
+}
+
 function renderCaseDetail(item) {
   const previous = state.returnAnchor || item.id;
   return `
@@ -1358,6 +1400,7 @@ function renderCaseDetail(item) {
       ${renderF2LRecognitionBoard(item)}
       ${firstF2LTimeline(item)}
       ${renderMoveVisualSteps(item)}
+      ${renderFormulaAlternatives(item)}
       ${renderActionGuide(item)}
     </section>`;
 }
@@ -1808,6 +1851,7 @@ function renderModeControls() {
 
 function renderCaseFinder(list) {
   const activeStage = ["F2L", "OLL", "PLL"].includes(state.filter) ? state.filter : "F2L";
+  if (activeStage === "PLL") return renderPLLFinder(list);
   const options = finderOptions[activeStage];
   const helper = {
     F2L: "Сначала выбери, где угол и ребро. Если сомневаешься, начни с базовых случаев.",
@@ -1828,6 +1872,61 @@ function renderCaseFinder(list) {
         </div>
       </div>
       <p class="finder-result"><strong>${list.length}</strong> подходящих случаев. Открой карточку, чтобы увидеть крупную схему и объяснение.</p>
+    </div>`;
+}
+
+function pllFinderSvg() {
+  const selected = state.finder;
+  const blockByFinder = {
+    "pll-block-back": "back",
+    "pll-block-front": "front",
+    "pll-block-left": "left",
+    "pll-block-right": "right",
+  }[selected];
+  const stripColor = (side) => blockByFinder === side ? "var(--accent)" : "var(--cube-muted)";
+  const stripOpacity = (side) => !blockByFinder || blockByFinder === side ? 1 : 0.36;
+  const sideName = {
+    back: "сзади",
+    front: "спереди",
+    left: "слева",
+    right: "справа",
+  }[blockByFinder] || "пока не выбран";
+  const cell = (x, y, fill = COLORS.U) => `<rect x="${x}" y="${y}" width="34" height="34" rx="7" fill="${fill}" stroke="var(--cube-line)" stroke-width="2"/>`;
+  return `
+    <svg class="pll-finder-svg" viewBox="0 0 300 300" role="img" aria-label="Подбор PLL по четырем боковым сторонам верхнего слоя">
+      <text x="150" y="24" text-anchor="middle" class="svg-note">желтый верх, смотри на боковые полосы</text>
+      <rect x="78" y="78" width="144" height="144" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
+      ${Array.from({ length: 9 }).map((_, index) => cell(92 + (index % 3) * 40, 92 + Math.floor(index / 3) * 40)).join("")}
+      <rect x="88" y="48" width="124" height="18" rx="7" fill="${stripColor("back")}" opacity="${stripOpacity("back")}" stroke="var(--cube-line)" stroke-width="3"/>
+      <rect x="88" y="234" width="124" height="18" rx="7" fill="${stripColor("front")}" opacity="${stripOpacity("front")}" stroke="var(--cube-line)" stroke-width="3"/>
+      <rect x="48" y="88" width="18" height="124" rx="7" fill="${stripColor("left")}" opacity="${stripOpacity("left")}" stroke="var(--cube-line)" stroke-width="3"/>
+      <rect x="234" y="88" width="18" height="124" rx="7" fill="${stripColor("right")}" opacity="${stripOpacity("right")}" stroke="var(--cube-line)" stroke-width="3"/>
+      ${selected === "pll-no-block" ? `<circle cx="150" cy="150" r="45" fill="none" stroke="var(--accent)" stroke-width="6" stroke-dasharray="11 9"/><text x="150" y="157" text-anchor="middle" class="svg-label">нет блока</text>` : ""}
+      ${selected === "pll-edges" ? `<text x="150" y="151" text-anchor="middle" class="svg-label">углы стоят</text><text x="150" y="172" text-anchor="middle" class="svg-note">двигаются ребра</text>` : ""}
+      ${selected === "pll-corners" ? `<circle cx="104" cy="104" r="8" fill="var(--accent)"/><circle cx="196" cy="104" r="8" fill="var(--accent)"/><circle cx="104" cy="196" r="8" fill="var(--accent)"/><circle cx="196" cy="196" r="8" fill="var(--accent)"/>` : ""}
+      <text x="150" y="282" text-anchor="middle" class="svg-note">готовый блок: ${sideName}</text>
+    </svg>`;
+}
+
+function renderPLLFinder(list) {
+  const options = finderOptions.PLL;
+  return `
+    <div class="case-finder pll-finder">
+      <div class="pll-finder-layout">
+        <div class="pll-finder-visual">
+          <p class="eyebrow">Подобрать PLL</p>
+          <h3>Смотри на четыре боковые стороны верхнего слоя</h3>
+          ${pllFinderSvg()}
+        </div>
+        <div class="pll-side-picker">
+          <p>Поверни куб так, чтобы желтая грань была сверху. Если видишь готовую боковую полосу, выбери, где она находится. После выбора сайт ищет по полной базе PLL, чтобы не прятать нужный случай.</p>
+          <div class="finder-buttons pll-buttons">
+            <button class="${state.finder === "" ? "active" : ""}" data-finder="">Все PLL</button>
+            ${options.map((option) => `<button class="pll-side-button ${state.finder === option.id ? "active" : ""}" data-finder="${option.id}"><span>${option.label}</span><small>${option.text}</small></button>`).join("")}
+          </div>
+          <p class="finder-result"><strong>${list.length}</strong> подходящих случаев. Открой карточку, чтобы увидеть перестановку крупно.</p>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -2102,6 +2201,7 @@ document.addEventListener("click", async (event) => {
   }
   if (finderButton) {
     state.finder = finderButton.dataset.finder || "";
+    if (state.filter === "PLL" && state.finder) state.level = "all";
     selectFirstVisible();
     render();
     return;
