@@ -1360,7 +1360,7 @@ button {
 
 .hold-orientation {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 210px);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
   gap: 12px;
   align-items: center;
   padding: 12px;
@@ -1415,7 +1415,7 @@ button {
 .hold-cube-svg,
 .hold-ll-preview .cube-svg {
   width: 100%;
-  max-width: 210px;
+  max-width: 320px;
   margin-inline: auto;
 }
 
