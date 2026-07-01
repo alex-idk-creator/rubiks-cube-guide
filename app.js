@@ -41,6 +41,30 @@ const PLL_SIDE_ROWS = [
   { id: "left", label: "Слева", center: "orange", color: COLORS.L },
 ];
 const PLL_ROW_LABELS = Object.fromEntries(PLL_SIDE_ROWS.map((row) => [row.id, row.label.toLowerCase()]));
+const PLL_STICKER_POSITIONS = ["left", "middle", "right"];
+const PLL_CASE_PATTERNS = {
+  "pll-h": { back: ["blue", "green", "blue"], right: ["red", "orange", "red"], front: ["green", "blue", "green"], left: ["orange", "red", "orange"] },
+  "pll-ua": { back: ["blue", "blue", "blue"], right: ["red", "orange", "red"], front: ["green", "red", "green"], left: ["orange", "green", "orange"] },
+  "pll-ub": { back: ["blue", "blue", "blue"], right: ["red", "green", "red"], front: ["green", "orange", "green"], left: ["orange", "red", "orange"] },
+  "pll-t": { back: ["blue", "blue", "red"], right: ["green", "orange", "blue"], front: ["green", "green", "red"], left: ["orange", "red", "orange"] },
+  "pll-jb": { back: ["red", "red", "green"], right: ["orange", "orange", "red"], front: ["orange", "green", "green"], left: ["blue", "blue", "blue"] },
+  "pll-z": { back: ["red", "green", "red"], right: ["green", "red", "green"], front: ["orange", "blue", "orange"], left: ["blue", "orange", "blue"] },
+  "pll-aa": { back: ["red", "blue", "red"], right: ["green", "red", "orange"], front: ["green", "green", "blue"], left: ["blue", "orange", "orange"] },
+  "pll-ab": { back: ["green", "blue", "orange"], right: ["blue", "red", "blue"], front: ["green", "green", "red"], left: ["red", "orange", "orange"] },
+  "pll-y": { back: ["green", "orange", "blue"], right: ["red", "red", "orange"], front: ["green", "green", "blue"], left: ["red", "blue", "orange"] },
+  "pll-f": { back: ["blue", "green", "red"], right: ["green", "red", "blue"], front: ["green", "blue", "red"], left: ["orange", "orange", "orange"] },
+  "pll-e": { back: ["orange", "blue", "red"], right: ["green", "red", "blue"], front: ["orange", "green", "red"], left: ["green", "orange", "blue"] },
+  "pll-ja": { back: ["green", "blue", "blue"], right: ["red", "green", "green"], front: ["orange", "orange", "orange"], left: ["red", "red", "blue"] },
+  "pll-ra": { back: ["red", "blue", "green"], right: ["orange", "green", "red"], front: ["orange", "orange", "green"], left: ["blue", "red", "blue"] },
+  "pll-rb": { back: ["orange", "orange", "blue"], right: ["red", "blue", "orange"], front: ["red", "green", "blue"], left: ["green", "red", "green"] },
+  "pll-v": { back: ["orange", "green", "red"], right: ["green", "red", "blue"], front: ["orange", "orange", "red"], left: ["green", "blue", "blue"] },
+  "pll-na": { back: ["blue", "blue", "green"], right: ["orange", "orange", "red"], front: ["blue", "green", "green"], left: ["orange", "red", "red"] },
+  "pll-nb": { back: ["green", "blue", "blue"], right: ["red", "orange", "orange"], front: ["green", "green", "blue"], left: ["red", "red", "orange"] },
+  "pll-ga": { back: ["blue", "green", "red"], right: ["green", "orange", "blue"], front: ["green", "red", "red"], left: ["orange", "blue", "orange"] },
+  "pll-gb": { back: ["blue", "orange", "red"], right: ["green", "green", "blue"], front: ["green", "blue", "red"], left: ["orange", "red", "orange"] },
+  "pll-gc": { back: ["blue", "red", "red"], right: ["green", "orange", "blue"], front: ["green", "blue", "red"], left: ["orange", "green", "orange"] },
+  "pll-gd": { back: ["blue", "green", "red"], right: ["green", "blue", "blue"], front: ["green", "orange", "red"], left: ["orange", "red", "orange"] },
+};
 
 const notation = [
   { move: "R", title: "Правая грань", face: "R", dir: "cw", text: "Передняя грань смотрит на тебя. Крути правый слой вверх по стрелке." },
@@ -194,13 +218,13 @@ const algorithms = [
   { id: "f2l-41", stage: "F2L", level: "all", name: "Case 41", group: "Пара почти готова", alg: "U' L' U L U F U' F'", note: "Зеркальная версия через левую руку и переднюю грань.", visual: { type: "f2l", slot: "FL", corner: "UFL", edge: "UF", pair: true } },
   { id: "f2l-42", stage: "F2L", level: "all", name: "Case 42", group: "Учебный контроль", alg: "R U' R' U F' U' F", note: "Дополнительный учебный вариант для полного набора: сравни цвета пары, поставь ее над слотом и вставь без угадывания.", visual: { type: "f2l", slot: "FR", corner: "UR", edge: "UF", pair: true } },
 
-  { id: "oll-27", stage: "OLL", level: "start", name: "Sune", group: "OCLL", alg: "R U R' U R U2 R'", note: "Один угол уже желтый сверху. Остальные углы развернутся этой формулой.", visual: { type: "oll", top: "010111110", sides: ["F1", "R0", "R2"], hold: "готовый угол спереди-слева" } },
-  { id: "oll-26", stage: "OLL", level: "start", name: "Anti-Sune", group: "OCLL", alg: "R U2 R' U' R U' R'", note: "Зеркальный Sune. Сравни боковые желтые наклейки перед стартом.", visual: { type: "oll", top: "010111011", sides: ["F1", "L0", "L2"], hold: "готовый угол спереди-справа" } },
-  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U2 R' U' R U R' U' R U' R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2", "B0", "B2"], hold: "без желтых углов сверху, фары на двух сторонах" } },
-  { id: "oll-22", stage: "OLL", level: "more", name: "Pi", group: "OCLL", alg: "R U2 R2 U' R2 U' R2 U2 R", note: "Нет готовых углов сверху. Отличается парой боковых желтых наклеек на одной стороне.", visual: { type: "oll", top: "010111010", sides: ["F0", "F2"], hold: "фары на одной стороне" } },
-  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D' R U2 R' D R U2 R", note: "Два угла уже желтые сверху на одной стороне. Держи боковые фары слева.", visual: { type: "oll", top: "110111110", sides: ["L0", "L2"], hold: "фары слева" } },
-  { id: "oll-24", stage: "OLL", level: "more", name: "Chameleon", group: "OCLL", alg: "r U R' U' r' F R F'", note: "Два готовых угла по диагонали. Ориентируйся по боковым желтым.", visual: { type: "oll", top: "011111110", sides: ["F2", "B0"], hold: "желтые углы по диагонали" } },
-  { id: "oll-25", stage: "OLL", level: "more", name: "Bowtie", group: "OCLL", alg: "F' r U R' U' r' F R", note: "Два готовых угла рядом, но боковые желтые образуют форму бабочки.", visual: { type: "oll", top: "010111111", sides: ["F0", "R2"], hold: "форма бабочки по боковым наклейкам" } },
+  { id: "oll-27", stage: "OLL", level: "start", name: "Sune", group: "OCLL", alg: "R U R' U R U2 R'", note: "Один угол уже желтый сверху. Остальные углы развернутся этой формулой.", visual: { type: "oll", top: "010111110", sides: ["B0", "F2", "R0"], hold: "один желтый угол сверху спереди-слева" } },
+  { id: "oll-26", stage: "OLL", level: "start", name: "Anti-Sune", group: "OCLL", alg: "R U2 R' U' R U' R'", note: "Зеркальный Sune. Сравни боковые желтые наклейки перед стартом.", visual: { type: "oll", top: "011111010", sides: ["F0", "L0", "R2"], hold: "один желтый угол сверху сзади-справа" } },
+  { id: "oll-21", stage: "OLL", level: "more", name: "H", group: "OCLL", alg: "R U2 R' U' R U R' U' R U' R'", note: "На верхней грани нет готовых углов, но желтый крест уже есть.", visual: { type: "oll", top: "010111010", sides: ["B0", "B2", "F0", "F2"], hold: "нет желтых углов сверху, фары спереди и сзади" } },
+  { id: "oll-22", stage: "OLL", level: "more", name: "Pi", group: "OCLL", alg: "R U2 R2 U' R2 U' R2 U2 R", note: "Нет готовых углов сверху. Отличается парой боковых желтых наклеек на одной стороне.", visual: { type: "oll", top: "010111010", sides: ["B2", "F2", "L0", "L2"], hold: "боковые желтые наклейки образуют пару справа и слева" } },
+  { id: "oll-23", stage: "OLL", level: "more", name: "Headlights", group: "OCLL", alg: "R2 D' R U2 R' D R U2 R", note: "Два угла уже желтые сверху на одной стороне. Держи боковые фары сзади.", visual: { type: "oll", top: "010111111", sides: ["B0", "B2"], hold: "два верхних желтых угла спереди, фары сзади" } },
+  { id: "oll-24", stage: "OLL", level: "more", name: "Chameleon", group: "OCLL", alg: "r U R' U' r' F R F'", note: "Два готовых угла по диагонали. Ориентируйся по боковым желтым.", visual: { type: "oll", top: "011111011", sides: ["B0", "F0"], hold: "желтые углы сверху по диагонали" } },
+  { id: "oll-25", stage: "OLL", level: "more", name: "Bowtie", group: "OCLL", alg: "F' r U R' U' r' F R", note: "Два готовых угла рядом, но боковые желтые образуют форму бабочки.", visual: { type: "oll", top: "011111110", sides: ["F2", "L0"], hold: "форма бабочки по боковым наклейкам" } },
 
   { id: "pll-h", stage: "PLL", level: "start", name: "H-perm", group: "Только ребра", alg: "M2 U M2 U2 M2 U M2", note: "Меняет противоположные ребра. Углы уже правильные.", visual: { type: "pll", kind: "edges-opposite", blocks: ["corners"], arrows: "opposite" } },
   { id: "pll-ua", stage: "PLL", level: "start", name: "Ua-perm", group: "Только ребра", alg: "R U' R U R U R U' R' U' R2", note: "Цикл трех ребер по верхнему слою.", visual: { type: "pll", kind: "edges-cycle-cw", blocks: ["corners"], arrows: "cw" } },
@@ -1098,13 +1122,13 @@ function pllRowById(side) {
 
 function pllCellFriendlyName(cell) {
   const [side, position] = cell.split("-");
-  const positionLabel = position === "left" ? "левая клетка" : "правая клетка";
-  return `${positionLabel} строки “${pllRowById(side).label}”`;
+  const map = { left: "левая", middle: "средняя", right: "правая" };
+  return `${map[position] || "наклейка"} верхнего слоя на стороне “${pllRowById(side).label}”`;
 }
 
 function pllRowStatus(side) {
   const row = pllRowById(side);
-  const cells = [`${side}-left`, `${side}-right`];
+  const cells = PLL_STICKER_POSITIONS.map((position) => `${side}-${position}`);
   const colors = cells.map((cell) => state.pllPaint.stickers[cell]).filter(Boolean);
   const matching = colors.filter((color) => color === row.center).length;
   const nonCenter = colors.filter((color) => color !== row.center).length;
@@ -1115,7 +1139,7 @@ function pllRowStatus(side) {
     painted: colors.length,
     matching,
     nonCenter,
-    ready: colors.length === 2 && matching === 2,
+    ready: colors.length === 3 && matching === 3,
   };
 }
 
@@ -1125,92 +1149,118 @@ function pllPaintProfile() {
     statuses,
     readyRows: statuses.filter((row) => row.ready).map((row) => row.side),
     paintedRows: statuses.filter((row) => row.painted > 0).length,
-    completeRows: statuses.filter((row) => row.painted === 2).length,
+    completeRows: statuses.filter((row) => row.painted === 3).length,
     matchingCount: statuses.reduce((sum, row) => sum + row.matching, 0),
     nonCenterCount: statuses.reduce((sum, row) => sum + row.nonCenter, 0),
   };
 }
 
-function pllVisualProfile(item) {
-  const blocks = new Set(item.visual?.blocks || []);
-  const sideBlocks = PLL_SIDE_ROWS.map((row) => row.id).filter((side) => blocks.has(side));
-  if (blocks.has("corners")) return { type: "corners-ready", sideBlocks: [] };
-  if (blocks.has("edges")) return { type: "edges-ready", sideBlocks: [] };
-  if (blocks.has("none")) return { type: "no-block", sideBlocks: [] };
-  return { type: "side-block", sideBlocks };
+function pllPatternStickers(pattern) {
+  const stickers = [];
+  for (const row of PLL_SIDE_ROWS) {
+    (pattern[row.id] || []).forEach((color, index) => {
+      const position = PLL_STICKER_POSITIONS[index];
+      const cell = `${row.id}-${position}`;
+      const p = row.id === "back" ? { x: index - 1, y: 1, z: -1 }
+        : row.id === "right" ? { x: 1, y: 1, z: index - 1 }
+        : row.id === "front" ? { x: index - 1, y: 1, z: 1 }
+        : { x: -1, y: 1, z: index - 1 };
+      const n = row.id === "back" ? { x: 0, y: 0, z: -1 }
+        : row.id === "right" ? { x: 1, y: 0, z: 0 }
+        : row.id === "front" ? { x: 0, y: 0, z: 1 }
+        : { x: -1, y: 0, z: 0 };
+      stickers.push({ color, p, n, cell });
+    });
+  }
+  return stickers;
+}
+
+function rotatePLLVector(v, turns) {
+  let { x, y, z } = v;
+  const normalized = ((turns % 4) + 4) % 4;
+  for (let i = 0; i < normalized; i += 1) {
+    [x, z] = [-z, x];
+  }
+  return { x, y, z };
+}
+
+function pllCellFromSticker(sticker) {
+  const { p, n } = sticker;
+  if (n.z === -1) return `back-${PLL_STICKER_POSITIONS[p.x + 1]}`;
+  if (n.x === 1) return `right-${PLL_STICKER_POSITIONS[p.z + 1]}`;
+  if (n.z === 1) return `front-${PLL_STICKER_POSITIONS[p.x + 1]}`;
+  if (n.x === -1) return `left-${PLL_STICKER_POSITIONS[p.z + 1]}`;
+  return "";
+}
+
+function rotatePLLPattern(pattern, turns) {
+  const rotated = { back: Array(3), right: Array(3), front: Array(3), left: Array(3) };
+  for (const sticker of pllPatternStickers(pattern)) {
+    const next = {
+      color: sticker.color,
+      p: rotatePLLVector(sticker.p, turns),
+      n: rotatePLLVector(sticker.n, turns),
+    };
+    const cell = pllCellFromSticker(next);
+    const [side, position] = cell.split("-");
+    rotated[side][PLL_STICKER_POSITIONS.indexOf(position)] = sticker.color;
+  }
+  return rotated;
+}
+
+function pllPatternValue(pattern, cell) {
+  const [side, position] = cell.split("-");
+  return pattern?.[side]?.[PLL_STICKER_POSITIONS.indexOf(position)] || "";
+}
+
+function pllPatternRowsReady(pattern) {
+  return PLL_SIDE_ROWS
+    .filter((row) => (pattern[row.id] || []).every((color) => color === row.center))
+    .map((row) => row.id);
 }
 
 function pllPaintMatch(item) {
   if (item.stage !== "PLL") return { ok: true, score: 0, reasons: [] };
   const entries = pllPaintEntries();
   if (!entries.length) return { ok: true, score: 0, reasons: [] };
+  const basePattern = PLL_CASE_PATTERNS[item.id];
+  if (!basePattern) return { ok: true, score: 0, reasons: ["нет точного шаблона, сравни по карточке"] };
 
-  const paint = pllPaintProfile();
-  const visual = pllVisualProfile(item);
-  const readyLabels = paint.readyRows.map((side) => PLL_ROW_LABELS[side]).join(", ");
-
-  if (visual.type === "corners-ready") {
-    if (paint.nonCenterCount > 0) {
-      return { ok: false, score: 0, reasons: [], mismatch: "В этом PLL боковые углы уже должны совпадать с центрами." };
+  const rotations = [0, 1, 2, 3].map((turns) => ({ turns, pattern: rotatePLLPattern(basePattern, turns) }));
+  const matches = rotations.map(({ turns, pattern }) => {
+    let score = 0;
+    const reasons = [];
+    for (const [cell, color] of entries) {
+      if (pllPatternValue(pattern, cell) !== color) return { ok: false, score: 0, turns, reasons: [] };
+      score += 3;
+      if (reasons.length < 3) reasons.push(`${pllCellFriendlyName(cell)}: ${pllPaintColor(color).label.toLowerCase()}`);
     }
-    return {
-      ok: true,
-      score: 8 + paint.matchingCount * 2 + paint.readyRows.length * 5,
-      reasons: paint.readyRows.length ? [`углы совпали: ${readyLabels}`] : ["похоже на PLL, где углы уже стоят"],
-    };
-  }
+    const readyRows = pllPatternRowsReady(pattern);
+    score += readyRows.length * 4;
+    if (entries.length === 12) score += 30;
+    return { ok: true, score, turns, reasons, readyRows };
+  }).filter((match) => match.ok);
 
-  if (visual.type === "side-block") {
-    if (paint.readyRows.length) {
-      const exact = paint.readyRows.filter((side) => visual.sideBlocks.includes(side));
-      if (!exact.length) {
-        return { ok: false, score: 0, reasons: [], mismatch: "Готовая полоса стоит в другом месте." };
-      }
-      return {
-        ok: true,
-        score: 9 + paint.readyRows.length * 3 + exact.length * 6,
-        reasons: [`готовая полоса ${exact.map((side) => PLL_ROW_LABELS[side]).join(", ")}`],
-      };
-    }
-    if (paint.completeRows >= 3 && paint.nonCenterCount >= 4) {
-      return { ok: false, score: 0, reasons: [], mismatch: "У этого PLL обычно виден готовый боковой блок." };
-    }
-    return { ok: true, score: paint.matchingCount, reasons: ["пока не хватает данных о готовом блоке"] };
-  }
-
-  if (visual.type === "no-block") {
-    if (paint.readyRows.length) {
-      return { ok: false, score: 0, reasons: [], mismatch: "Этот PLL без готовой боковой полосы." };
-    }
-    return {
-      ok: true,
-      score: 7 + paint.nonCenterCount * 2 + paint.completeRows,
-      reasons: ["готовой боковой полосы не видно"],
-    };
-  }
-
-  if (visual.type === "edges-ready") {
-    if (paint.readyRows.length) {
-      return { ok: false, score: 0, reasons: [], mismatch: "Этот PLL больше похож на перестановку углов, без готовой боковой полосы." };
-    }
-    return {
-      ok: true,
-      score: 5 + paint.nonCenterCount * 2 + paint.completeRows,
-      reasons: ["нет полной боковой полосы — проверь угловой PLL"],
-    };
-  }
-
-  return { ok: true, score: 0, reasons: [] };
+  if (!matches.length) return { ok: false, score: 0, reasons: [], mismatch: "Раскраска не совпала с этим PLL." };
+  matches.sort((a, b) => b.score - a.score);
+  const best = matches[0];
+  const aufText = best.turns ? `перед формулой нужен поворот U${best.turns === 2 ? "2" : best.turns === 1 ? "" : "'"}` : "ориентация уже совпадает";
+  return {
+    ok: true,
+    score: best.score,
+    reasons: entries.length === 12 ? [`12 наклеек совпали, ${aufText}`] : best.reasons,
+    turns: best.turns,
+  };
 }
 
 function pllPaintHint(listLength) {
   const entries = pllPaintEntries();
-  if (!entries.length) return "Начни с одной стороны: если две крайние наклейки совпадают с центром этой стороны, закрась их таким же цветом. Потом отметь остальные стороны.";
+  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: по три на каждой стороне. Цветной квадрат “центр” рядом со строкой нужен только как ориентир.";
   const paint = pllPaintProfile();
-  if (!listLength) return "Совпадений нет. Проверь, что жёлтый верх сверху, а четыре строки соответствуют сторонам: сзади, справа, спереди, слева.";
-  if (paint.readyRows.length) return `Готовая полоса найдена: ${paint.readyRows.map((side) => PLL_ROW_LABELS[side]).join(", ")}. Список сужен до PLL с блоками и случаев “только рёбра”.`;
-  if (paint.completeRows < 4) return "Чтобы сузить подбор, закрась обе крайние клетки хотя бы у двух-трёх сторон.";
-  return "Готовых боковых полос нет: сайт показывает PLL без блока и угловые перестановки.";
+  if (!listLength) return "Совпадений нет. Проверь порядок сторон: сзади, справа, спереди, слева. Средняя наклейка в строке тоже должна быть цветом верхнего слоя, а не центром.";
+  if (entries.length < 12) return `Закрашено ${entries.length} из 12. Чем больше наклеек отметишь, тем меньше вариантов останется.`;
+  if (listLength === 1) return "Полная раскраска дала один PLL. Открой разбор и сравни, как держать кубик перед формулой.";
+  return `Все 12 наклеек закрашены, но осталось ${listLength}. Проверь цвета или поверни верхний слой на кубике и сравни ещё раз.`;
 }
 
 function renderPLLPalette() {
@@ -1238,11 +1288,12 @@ function renderPLLPaintRows() {
     <div class="pll-strip-grid" aria-label="Раскраска четырех боковых полос PLL">
       ${PLL_SIDE_ROWS.map((row) => `
         <div class="pll-strip-row">
-          <strong>${row.label}</strong>
-          <div class="pll-strip-cells">
-            ${stickerButton(row.id, "left")}
+          <div class="pll-strip-label">
+            <strong>${row.label}</strong>
             <span class="pll-strip-center" style="background:${row.color}" title="центр ${row.label.toLowerCase()} стороны">${pllPaintColor(row.center).short}</span>
-            ${stickerButton(row.id, "right")}
+          </div>
+          <div class="pll-strip-cells">
+            ${PLL_STICKER_POSITIONS.map((position) => stickerButton(row.id, position)).join("")}
           </div>
         </div>`).join("")}
     </div>`;
@@ -1258,17 +1309,17 @@ function ollSvg(visual) {
     const yellow = visual.top[index] === "1";
     return `<rect x="${x}" y="${y}" width="43" height="43" rx="8" fill="${yellow ? COLORS.U : "var(--cube-shell)"}" opacity="${yellow ? 1 : 0.62}" stroke="var(--cube-line)" stroke-width="${yellow ? 4 : 2}"/>`;
   };
-  const sideDot = (face, index, x, y) => {
+  const sideSticker = (face, index, x, y, vertical = false) => {
     const active = sideSet.has(`${face}${index}`);
-    return `<circle class="side-sticker-dot" cx="${x + 17}" cy="${y + 9}" r="${active ? 10 : 8}" fill="${active ? COLORS.U : "var(--cube-muted)"}" opacity="${active ? 1 : 0.5}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>`;
+    return `<rect class="side-sticker-dot" x="${x}" y="${y}" width="${vertical ? 20 : 34}" height="${vertical ? 34 : 20}" rx="8" fill="${active ? COLORS.U : "var(--cube-muted)"}" opacity="${active ? 1 : 0.5}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>`;
   };
   return `
     <svg class="oll-flat-svg" viewBox="0 0 330 300" role="img" aria-label="OLL после желтого креста: верх и боковые желтые наклейки">
-      <text x="165" y="28" text-anchor="middle" class="svg-note">желтый крест готов — сравни углы</text>
-      ${[0, 1, 2].map((i) => sideDot("B", i, 92 + i * 48, 44)).join("")}
-      ${[0, 1, 2].map((i) => sideDot("F", i, 92 + i * 48, 226)).join("")}
-      ${[0, 1, 2].map((i) => sideDot("L", i, 58, 76 + i * 48)).join("")}
-      ${[0, 1, 2].map((i) => sideDot("R", i, 238, 76 + i * 48)).join("")}
+      <text x="165" y="28" text-anchor="middle" class="svg-note">желтый крест готов — сравни верх и боковые наклейки углов</text>
+      ${[0, 1, 2].map((i) => sideSticker("B", i, 96 + i * 48, 44)).join("")}
+      ${[0, 1, 2].map((i) => sideSticker("F", i, 96 + i * 48, 232)).join("")}
+      ${[0, 1, 2].map((i) => sideSticker("L", i, 58, 80 + i * 48, true)).join("")}
+      ${[0, 1, 2].map((i) => sideSticker("R", i, 252, 80 + i * 48, true)).join("")}
       ${Array.from({ length: 9 }).map((_, index) => topCell(index)).join("")}
       <text x="165" y="282" text-anchor="middle" class="svg-note">${visual.hold || "поверни U, пока рисунок совпадет"}</text>
     </svg>`;
@@ -2159,7 +2210,7 @@ function renderPLLFinder(list) {
         <div class="pll-finder-visual pll-strip-panel">
           <p class="eyebrow">Подобрать PLL</p>
           <h3>Раскрась четыре боковые полоски</h3>
-          <p>Жёлтый верх уже собран. В каждой строке центр зафиксирован как сторона кубика, а две крайние клетки ты раскрашиваешь по своему кубику.</p>
+          <p>Жёлтый верх уже собран. В каждой строке раскрась все три боковые наклейки верхнего слоя. Маленький цветной квадрат рядом со стороной — это центр-ориентир, его не раскрашивают.</p>
           ${renderPLLPaintRows()}
           ${renderPLLPalette()}
           <div class="paint-actions">
@@ -2173,8 +2224,8 @@ function renderPLLFinder(list) {
           <ol>
             <li>Держи белый снизу, жёлтый сверху.</li>
             <li>Смотри на четыре боковые стороны верхнего слоя: сзади, справа, спереди, слева.</li>
-            <li>Центральная клетка строки — это цвет стороны. Крайние две клетки раскрась как на своём кубике.</li>
-            <li>Если крайние две клетки совпали с центром, это готовая боковая полоса.</li>
+            <li>В каждой строке раскрась три наклейки верхнего слоя: левую, среднюю и правую.</li>
+            <li>Если все три наклейки строки совпали с центром стороны, это готовая боковая полоса.</li>
           </ol>
           <p class="finder-result"><strong>${list.length}</strong> подходящих PLL. Открой карточку, чтобы увидеть перестановку крупно.</p>
         </div>
