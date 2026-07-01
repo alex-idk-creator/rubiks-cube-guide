@@ -821,6 +821,105 @@ button {
   text-align: left;
 }
 
+.pll-paint-finder {
+  padding: 12px;
+}
+
+.pll-strip-panel,
+.pll-paint-help {
+  align-content: start;
+}
+
+.pll-paint-help h4,
+.pll-paint-help p,
+.pll-paint-help ol {
+  margin: 0;
+}
+
+.pll-paint-help h4 {
+  font-size: 1.22rem;
+}
+
+.pll-paint-help p,
+.pll-paint-help ol {
+  color: var(--muted);
+}
+
+.pll-paint-help ol {
+  display: grid;
+  gap: 7px;
+  padding-left: 20px;
+}
+
+.pll-strip-grid {
+  display: grid;
+  gap: 9px;
+}
+
+.pll-strip-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.pll-strip-row strong {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.pll-strip-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(44px, 1fr));
+  gap: 7px;
+}
+
+.pll-strip-sticker,
+.pll-strip-center {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  border: 2px solid var(--cube-line);
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 950;
+}
+
+.pll-strip-sticker {
+  cursor: pointer;
+  opacity: 0.58;
+  transition: opacity 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+
+.pll-strip-sticker.painted,
+.pll-strip-sticker:hover,
+.pll-strip-sticker:focus {
+  opacity: 1;
+}
+
+.pll-strip-sticker:hover,
+.pll-strip-sticker:focus {
+  border-color: var(--accent);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.pll-strip-sticker:not(.painted) span {
+  color: transparent;
+}
+
+.pll-strip-center {
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.22);
+}
+
+.pll-palette {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .search-box {
   display: grid;
   gap: 6px;
@@ -1123,7 +1222,11 @@ button {
 .paint-palette button[data-paint-color="red"] span,
 .paint-palette button[data-paint-color="blue"] span,
 .paint-palette button[data-paint-color="green"] span,
-.paint-palette button[data-paint-color="orange"] span {
+.paint-palette button[data-paint-color="orange"] span,
+.paint-palette button[data-pll-paint-color="red"] span,
+.paint-palette button[data-pll-paint-color="blue"] span,
+.paint-palette button[data-pll-paint-color="green"] span,
+.paint-palette button[data-pll-paint-color="orange"] span {
   color: #fff;
 }
 
@@ -1997,8 +2100,17 @@ button {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .pll-palette {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .paint-palette button {
     min-height: 58px;
+  }
+
+  .pll-strip-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .wizard-options {

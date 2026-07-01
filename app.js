@@ -33,6 +33,15 @@ const F2L_ROLE_LABELS = {
   up: "жёлтый",
 };
 
+const PLL_PAINT_COLORS = F2L_PAINT_COLORS.filter((color) => ["green", "blue", "red", "orange", "gray"].includes(color.id));
+const PLL_SIDE_ROWS = [
+  { id: "back", label: "Сзади", center: "blue", color: COLORS.B },
+  { id: "right", label: "Справа", center: "red", color: COLORS.R },
+  { id: "front", label: "Спереди", center: "green", color: COLORS.F },
+  { id: "left", label: "Слева", center: "orange", color: COLORS.L },
+];
+const PLL_ROW_LABELS = Object.fromEntries(PLL_SIDE_ROWS.map((row) => [row.id, row.label.toLowerCase()]));
+
 const notation = [
   { move: "R", title: "Правая грань", face: "R", dir: "cw", text: "Передняя грань смотрит на тебя. Крути правый слой вверх по стрелке." },
   { move: "R'", title: "Правая обратно", face: "R", dir: "ccw", text: "Та же правая грань, но стрелка идет вниз: это обратный ход." },
@@ -368,6 +377,10 @@ const state = {
   },
   f2lPaint: {
     selectedColor: "white",
+    stickers: {},
+  },
+  pllPaint: {
+    selectedColor: "green",
     stickers: {},
   },
   selectedId: "f2l-1",
@@ -1051,13 +1064,188 @@ function renderSlotColorStatus() {
 }
 
 function renderPaintResultReason(item) {
-  const entries = paintEntries();
-  if (!entries.length || item.stage !== "F2L") return "";
-  const match = f2lPaintMatch(item);
-  if (!match.ok) return "";
-  const reasons = match.reasons.slice(0, 3).join(" · ");
-  const tail = match.reasons.length > 3 ? ` · ещё ${match.reasons.length - 3}` : "";
-  return `<p class="f2l-match-reason">Совпало: ${reasons}${tail}</p>`;
+  if (item.stage === "F2L") {
+    const entries = paintEntries();
+    if (!entries.length) return "";
+    const match = f2lPaintMatch(item);
+    if (!match.ok) return "";
+    const reasons = match.reasons.slice(0, 3).join(" · ");
+    const tail = match.reasons.length > 3 ? ` · ещё ${match.reasons.length - 3}` : "";
+    return `<p class="f2l-match-reason">Совпало: ${reasons}${tail}</p>`;
+  }
+  if (item.stage === "PLL") {
+    const entries = pllPaintEntries();
+    if (!entries.length) return "";
+    const match = pllPaintMatch(item);
+    if (!match.ok) return "";
+    const reasons = match.reasons.slice(0, 3).join(" · ");
+    return `<p class="f2l-match-reason pll-match-reason">PLL: ${reasons || "подходит по раскраске боковых полос"}</p>`;
+  }
+  return "";
+}
+
+function pllPaintColor(id) {
+  return PLL_PAINT_COLORS.find((color) => color.id === id) || PLL_PAINT_COLORS[0];
+}
+
+function pllPaintEntries() {
+  return Object.entries(state.pllPaint.stickers).filter(([, color]) => color && color !== "gray");
+}
+
+function pllRowById(side) {
+  return PLL_SIDE_ROWS.find((row) => row.id === side) || PLL_SIDE_ROWS[0];
+}
+
+function pllCellFriendlyName(cell) {
+  const [side, position] = cell.split("-");
+  const positionLabel = position === "left" ? "левая клетка" : "правая клетка";
+  return `${positionLabel} строки “${pllRowById(side).label}”`;
+}
+
+function pllRowStatus(side) {
+  const row = pllRowById(side);
+  const cells = [`${side}-left`, `${side}-right`];
+  const colors = cells.map((cell) => state.pllPaint.stickers[cell]).filter(Boolean);
+  const matching = colors.filter((color) => color === row.center).length;
+  const nonCenter = colors.filter((color) => color !== row.center).length;
+  return {
+    side,
+    label: row.label,
+    center: row.center,
+    painted: colors.length,
+    matching,
+    nonCenter,
+    ready: colors.length === 2 && matching === 2,
+  };
+}
+
+function pllPaintProfile() {
+  const statuses = PLL_SIDE_ROWS.map((row) => pllRowStatus(row.id));
+  return {
+    statuses,
+    readyRows: statuses.filter((row) => row.ready).map((row) => row.side),
+    paintedRows: statuses.filter((row) => row.painted > 0).length,
+    completeRows: statuses.filter((row) => row.painted === 2).length,
+    matchingCount: statuses.reduce((sum, row) => sum + row.matching, 0),
+    nonCenterCount: statuses.reduce((sum, row) => sum + row.nonCenter, 0),
+  };
+}
+
+function pllVisualProfile(item) {
+  const blocks = new Set(item.visual?.blocks || []);
+  const sideBlocks = PLL_SIDE_ROWS.map((row) => row.id).filter((side) => blocks.has(side));
+  if (blocks.has("corners")) return { type: "corners-ready", sideBlocks: [] };
+  if (blocks.has("edges")) return { type: "edges-ready", sideBlocks: [] };
+  if (blocks.has("none")) return { type: "no-block", sideBlocks: [] };
+  return { type: "side-block", sideBlocks };
+}
+
+function pllPaintMatch(item) {
+  if (item.stage !== "PLL") return { ok: true, score: 0, reasons: [] };
+  const entries = pllPaintEntries();
+  if (!entries.length) return { ok: true, score: 0, reasons: [] };
+
+  const paint = pllPaintProfile();
+  const visual = pllVisualProfile(item);
+  const readyLabels = paint.readyRows.map((side) => PLL_ROW_LABELS[side]).join(", ");
+
+  if (visual.type === "corners-ready") {
+    if (paint.nonCenterCount > 0) {
+      return { ok: false, score: 0, reasons: [], mismatch: "В этом PLL боковые углы уже должны совпадать с центрами." };
+    }
+    return {
+      ok: true,
+      score: 8 + paint.matchingCount * 2 + paint.readyRows.length * 5,
+      reasons: paint.readyRows.length ? [`углы совпали: ${readyLabels}`] : ["похоже на PLL, где углы уже стоят"],
+    };
+  }
+
+  if (visual.type === "side-block") {
+    if (paint.readyRows.length) {
+      const exact = paint.readyRows.filter((side) => visual.sideBlocks.includes(side));
+      if (!exact.length) {
+        return { ok: false, score: 0, reasons: [], mismatch: "Готовая полоса стоит в другом месте." };
+      }
+      return {
+        ok: true,
+        score: 9 + paint.readyRows.length * 3 + exact.length * 6,
+        reasons: [`готовая полоса ${exact.map((side) => PLL_ROW_LABELS[side]).join(", ")}`],
+      };
+    }
+    if (paint.completeRows >= 3 && paint.nonCenterCount >= 4) {
+      return { ok: false, score: 0, reasons: [], mismatch: "У этого PLL обычно виден готовый боковой блок." };
+    }
+    return { ok: true, score: paint.matchingCount, reasons: ["пока не хватает данных о готовом блоке"] };
+  }
+
+  if (visual.type === "no-block") {
+    if (paint.readyRows.length) {
+      return { ok: false, score: 0, reasons: [], mismatch: "Этот PLL без готовой боковой полосы." };
+    }
+    return {
+      ok: true,
+      score: 7 + paint.nonCenterCount * 2 + paint.completeRows,
+      reasons: ["готовой боковой полосы не видно"],
+    };
+  }
+
+  if (visual.type === "edges-ready") {
+    if (paint.readyRows.length) {
+      return { ok: false, score: 0, reasons: [], mismatch: "Этот PLL больше похож на перестановку углов, без готовой боковой полосы." };
+    }
+    return {
+      ok: true,
+      score: 5 + paint.nonCenterCount * 2 + paint.completeRows,
+      reasons: ["нет полной боковой полосы — проверь угловой PLL"],
+    };
+  }
+
+  return { ok: true, score: 0, reasons: [] };
+}
+
+function pllPaintHint(listLength) {
+  const entries = pllPaintEntries();
+  if (!entries.length) return "Начни с одной стороны: если две крайние наклейки совпадают с центром этой стороны, закрась их таким же цветом. Потом отметь остальные стороны.";
+  const paint = pllPaintProfile();
+  if (!listLength) return "Совпадений нет. Проверь, что жёлтый верх сверху, а четыре строки соответствуют сторонам: сзади, справа, спереди, слева.";
+  if (paint.readyRows.length) return `Готовая полоса найдена: ${paint.readyRows.map((side) => PLL_ROW_LABELS[side]).join(", ")}. Список сужен до PLL с блоками и случаев “только рёбра”.`;
+  if (paint.completeRows < 4) return "Чтобы сузить подбор, закрась обе крайние клетки хотя бы у двух-трёх сторон.";
+  return "Готовых боковых полос нет: сайт показывает PLL без блока и угловые перестановки.";
+}
+
+function renderPLLPalette() {
+  return `
+    <div class="paint-palette pll-palette" aria-label="Цвета боковых сторон PLL">
+      ${PLL_PAINT_COLORS.map((color) => `
+        <button class="${state.pllPaint.selectedColor === color.id ? "active" : ""}" data-pll-paint-color="${color.id}" title="${color.label}">
+          <span style="background:${color.value}">${color.short}</span>
+          <small>${color.label}</small>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderPLLPaintRows() {
+  const stickerButton = (side, position) => {
+    const cell = `${side}-${position}`;
+    const colorId = state.pllPaint.stickers[cell];
+    const color = colorId ? pllPaintColor(colorId) : null;
+    return `
+      <button class="pll-strip-sticker ${colorId ? "painted" : ""}" data-pll-paint-cell="${cell}" style="background:${color ? color.value : "var(--cube-muted)"}" title="${pllCellFriendlyName(cell)}">
+        <span>${color ? color.short : ""}</span>
+      </button>`;
+  };
+  return `
+    <div class="pll-strip-grid" aria-label="Раскраска четырех боковых полос PLL">
+      ${PLL_SIDE_ROWS.map((row) => `
+        <div class="pll-strip-row">
+          <strong>${row.label}</strong>
+          <div class="pll-strip-cells">
+            ${stickerButton(row.id, "left")}
+            <span class="pll-strip-center" style="background:${row.color}" title="центр ${row.label.toLowerCase()} стороны">${pllPaintColor(row.center).short}</span>
+            ${stickerButton(row.id, "right")}
+          </div>
+        </div>`).join("")}
+    </div>`;
 }
 
 function ollSvg(visual) {
@@ -1649,6 +1837,11 @@ function resetF2LPaint() {
   state.f2lPaint.selectedColor = "white";
 }
 
+function resetPLLPaint() {
+  state.pllPaint.stickers = {};
+  state.pllPaint.selectedColor = "green";
+}
+
 function jumpToTop() {
   app?.scrollIntoView({ block: "start", inline: "nearest" });
   document.documentElement.scrollTop = 0;
@@ -1673,16 +1866,21 @@ function filteredAlgorithms() {
   const allowedLevels = state.level === "all" ? ["start", "more", "all"] : state.level === "more" ? ["start", "more"] : ["start"];
   const finderOption = Object.values(finderOptions).flat().find((option) => option.id === state.finder);
   const hasPaint = paintEntries().length > 0;
+  const hasPllPaint = pllPaintEntries().length > 0;
   const list = algorithms.filter((item) => {
     const stageOk = item.stage === state.filter;
     const levelOk = allowedLevels.includes(item.level);
     const finderOk = !finderOption || finderOption.match(item);
     const f2lOk = item.stage !== "F2L" || f2lPaintMatch(item).ok;
+    const pllOk = item.stage !== "PLL" || pllPaintMatch(item).ok;
     const haystack = `${item.name} ${item.stage} ${item.group} ${item.alg} ${item.note}`.toLowerCase();
-    return stageOk && levelOk && finderOk && f2lOk && (!query || haystack.includes(query));
+    return stageOk && levelOk && finderOk && f2lOk && pllOk && (!query || haystack.includes(query));
   });
   if (state.filter === "F2L" && hasPaint) {
     return list.sort((a, b) => f2lPaintMatch(b).score - f2lPaintMatch(a).score);
+  }
+  if (state.filter === "PLL" && hasPllPaint) {
+    return list.sort((a, b) => pllPaintMatch(b).score - pllPaintMatch(a).score);
   }
   return list;
 }
@@ -1694,7 +1892,7 @@ function selectFirstVisible() {
 
 function setFilter(filter) {
   state.filter = filter;
-  state.level = filter === "F2L" ? "all" : filter === "OLL" ? "more" : "start";
+  state.level = filter === "F2L" || filter === "PLL" ? "all" : filter === "OLL" ? "more" : "start";
   state.query = "";
   state.finder = "";
   resetF2LFilters();
@@ -1954,22 +2152,31 @@ function pllFinderSvg() {
 }
 
 function renderPLLFinder(list) {
-  const options = finderOptions.PLL;
+  const paintedCount = pllPaintEntries().length;
   return `
-    <div class="case-finder pll-finder">
+    <div class="case-finder pll-finder pll-paint-finder">
       <div class="pll-finder-layout">
-        <div class="pll-finder-visual">
+        <div class="pll-finder-visual pll-strip-panel">
           <p class="eyebrow">Подобрать PLL</p>
-          <h3>Смотри на четыре боковые стороны верхнего слоя</h3>
-          ${pllFinderSvg()}
-        </div>
-        <div class="pll-side-picker">
-          <p>Поверни куб так, чтобы желтая грань была сверху. Если видишь готовую боковую полосу, выбери, где она находится. После выбора сайт ищет по полной базе PLL, чтобы не прятать нужный случай.</p>
-          <div class="finder-buttons pll-buttons">
-            <button class="${state.finder === "" ? "active" : ""}" data-finder="">Все PLL</button>
-            ${options.map((option) => `<button class="pll-side-button ${state.finder === option.id ? "active" : ""}" data-finder="${option.id}"><span>${option.label}</span><small>${option.text}</small></button>`).join("")}
+          <h3>Раскрась четыре боковые полоски</h3>
+          <p>Жёлтый верх уже собран. В каждой строке центр зафиксирован как сторона кубика, а две крайние клетки ты раскрашиваешь по своему кубику.</p>
+          ${renderPLLPaintRows()}
+          ${renderPLLPalette()}
+          <div class="paint-actions">
+            <span>Выбран: <b>${pllPaintColor(state.pllPaint.selectedColor).label}</b></span>
+            <button class="text-button" data-reset-pll-paint>Сбросить PLL</button>
           </div>
-          <p class="finder-result"><strong>${list.length}</strong> подходящих случаев. Открой карточку, чтобы увидеть перестановку крупно.</p>
+        </div>
+        <div class="pll-side-picker pll-paint-help">
+          <h4>${paintedCount ? `Подходит: ${list.length}` : "Сначала перенеси цвета с кубика"}</h4>
+          <p>${pllPaintHint(list.length)}</p>
+          <ol>
+            <li>Держи белый снизу, жёлтый сверху.</li>
+            <li>Смотри на четыре боковые стороны верхнего слоя: сзади, справа, спереди, слева.</li>
+            <li>Центральная клетка строки — это цвет стороны. Крайние две клетки раскрась как на своём кубике.</li>
+            <li>Если крайние две клетки совпали с центром, это готовая боковая полоса.</li>
+          </ol>
+          <p class="finder-result"><strong>${list.length}</strong> подходящих PLL. Открой карточку, чтобы увидеть перестановку крупно.</p>
         </div>
       </div>
     </div>`;
@@ -2172,6 +2379,9 @@ document.addEventListener("click", async (event) => {
   const paintColorButton = event.target.closest("[data-paint-color]");
   const paintCell = event.target.closest("[data-paint-cell]");
   const resetF2LPaintButton = event.target.closest("[data-reset-f2l-paint]");
+  const pllPaintColorButton = event.target.closest("[data-pll-paint-color]");
+  const pllPaintCell = event.target.closest("[data-pll-paint-cell]");
+  const resetPLLPaintButton = event.target.closest("[data-reset-pll-paint]");
   const filterJump = event.target.closest("[data-filter-jump]");
   const targetButton = event.target.closest("[data-target]");
   const studyButton = event.target.closest("[data-study]");
@@ -2200,6 +2410,11 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
+  if (pllPaintColorButton) {
+    state.pllPaint.selectedColor = pllPaintColorButton.dataset.pllPaintColor || "green";
+    render();
+    return;
+  }
   if (paintCell) {
     const cell = paintCell.dataset.paintCell;
     const color = state.f2lPaint.selectedColor;
@@ -2209,8 +2424,23 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
+  if (pllPaintCell) {
+    const cell = pllPaintCell.dataset.pllPaintCell;
+    const color = state.pllPaint.selectedColor;
+    if (color === "gray") delete state.pllPaint.stickers[cell];
+    else state.pllPaint.stickers[cell] = color;
+    selectFirstVisible();
+    render();
+    return;
+  }
   if (resetF2LPaintButton) {
     resetF2LPaint();
+    selectFirstVisible();
+    render();
+    return;
+  }
+  if (resetPLLPaintButton) {
+    resetPLLPaint();
     selectFirstVisible();
     render();
     return;
