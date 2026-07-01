@@ -1309,26 +1309,28 @@ function renderPLLPaintRows() {
 }
 
 function pllHoldSvg() {
-  const strip = (x, y, text, active = false) => `
-    <g>
-      <rect x="${x}" y="${y}" width="78" height="24" rx="7" fill="${active ? "var(--accent-soft)" : "var(--surface)"}" stroke="${active ? "var(--accent)" : "var(--line)"}" stroke-width="${active ? 3 : 2}"/>
-      <text x="${x + 39}" y="${y + 16}" text-anchor="middle" class="svg-mini-label">${text}</text>
-    </g>`;
+  const cellSize = 36;
+  const gap = 5;
+  const x0 = 70;
+  const y0 = 50;
+  const topColors = [COLORS.L, COLORS.F, COLORS.R];
+  const cells = Array.from({ length: 9 }).map((_, index) => {
+    const row = Math.floor(index / 3);
+    const col = index % 3;
+    const active = row === 0;
+    const fill = active ? topColors[col] : "var(--cube-muted)";
+    return `<rect x="${x0 + col * (cellSize + gap)}" y="${y0 + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${active ? "var(--accent)" : "var(--cube-line)"}" stroke-width="${active ? 4 : 2}"/>`;
+  }).join("");
   return `
-    <svg class="pll-hold-svg" viewBox="0 0 250 190" role="img" aria-label="Как держать кубик для PLL-подбора">
-      <text x="125" y="22" text-anchor="middle" class="svg-note">желтый сверху, белый снизу</text>
-      <rect x="76" y="54" width="98" height="98" rx="15" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="5"/>
-      ${Array.from({ length: 9 }).map((_, index) => {
-        const row = Math.floor(index / 3);
-        const col = index % 3;
-        return `<rect x="${88 + col * 28}" y="${66 + row * 28}" width="24" height="24" rx="5" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>`;
-      }).join("")}
-      ${strip(86, 30, "3")}
-      ${strip(86, 158, "1", true)}
-      <g transform="translate(48 64) rotate(90 12 39)">${strip(0, 0, "4")}</g>
-      <g transform="translate(202 64) rotate(90 12 39)">${strip(0, 0, "2")}</g>
-      <path d="M179 158 C208 142 211 91 184 67" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
-      <path d="M184 67 L196 70 L188 80" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <svg class="pll-hold-svg" viewBox="0 0 250 210" role="img" aria-label="Как держать кубик для PLL-подбора: одна передняя грань">
+      <text x="125" y="23" text-anchor="middle" class="svg-note">одна грань смотрит прямо на тебя</text>
+      <text x="125" y="42" text-anchor="middle" class="svg-mini-label">жёлтый сверху, белый снизу</text>
+      <rect x="${x0 - 8}" y="${y0 - 8}" width="${cellSize * 3 + gap * 2 + 16}" height="${cellSize * 3 + gap * 2 + 16}" rx="16" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="4"/>
+      ${cells}
+      <path d="M62 44 L62 85" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M62 44 L55 55 M62 44 L69 55" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+      <text x="125" y="188" text-anchor="middle" class="svg-label">строка 1</text>
+      <text x="125" y="204" text-anchor="middle" class="svg-note">перенеси верхний ряд этой стороны</text>
     </svg>`;
 }
 
@@ -1640,9 +1642,9 @@ function renderHoldOrientation(item) {
       <div class="hold-copy">
         <p class="study-label">Как держать кубик</p>
         <h3>Жёлтый верх уже собран</h3>
-        <p>Держи готовый блок в том же месте, что на схеме. Если блока нет, ориентируйся по стрелкам перестановки.</p>
+        <p>Для выполнения формулы держи одну боковую грань прямо перед собой, белый снизу, жёлтый сверху. Если нужно сравнить другую сторону, поверни весь куб, а не пытайся смотреть на несколько сторон сразу.</p>
       </div>
-      <div class="hold-ll-preview">${visualSvg(item)}</div>
+      <div class="hold-ll-preview">${pllHoldSvg()}</div>
     </div>`;
 }
 
@@ -2231,8 +2233,8 @@ function renderPLLFinder(list) {
           <div class="pll-hold-card">
             <div>
               <p class="eyebrow">Как держать</p>
-              <h4>Строка 1 — сторона, которая смотрит на тебя</h4>
-              <p>Белый держи снизу, жёлтый сверху. Выбери любую боковую сторону как первую строку, потом поворачивай весь куб по кругу и заноси строки 2, 3 и 4.</p>
+              <h4>Смотри только на одну переднюю грань</h4>
+              <p>Белый держи снизу, жёлтый сверху. Поверни куб так, чтобы нужная боковая сторона смотрела прямо на тебя, и перенеси её верхний ряд как строку 1. Потом поверни весь куб и так же занеси строки 2, 3 и 4.</p>
             </div>
             ${pllHoldSvg()}
           </div>
