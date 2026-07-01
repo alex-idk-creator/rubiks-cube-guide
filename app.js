@@ -41,6 +41,7 @@ const PLL_SIDE_ROWS = [
   { id: "left", label: "Слева", center: "orange", color: COLORS.L },
 ];
 const PLL_STICKER_POSITIONS = ["left", "middle", "right"];
+const PLL_GRID_CELLS = PLL_SIDE_ROWS.flatMap((row) => PLL_STICKER_POSITIONS.map((position) => `${row.id}-${position}`));
 const PLL_CASE_PATTERNS = {
   "pll-h": { back: ["blue", "green", "blue"], right: ["red", "orange", "red"], front: ["green", "blue", "green"], left: ["orange", "red", "orange"] },
   "pll-ua": { back: ["blue", "blue", "blue"], right: ["red", "orange", "red"], front: ["green", "red", "green"], left: ["orange", "green", "orange"] },
@@ -1124,68 +1125,101 @@ function pllCellFriendlyName(cell) {
   return `${map[position] || "наклейка"} наклейка в строке ${rowIndex}`;
 }
 
-function pllPatternStickers(pattern) {
-  const stickers = [];
-  for (const row of PLL_SIDE_ROWS) {
-    (pattern[row.id] || []).forEach((color, index) => {
-      const position = PLL_STICKER_POSITIONS[index];
-      const cell = `${row.id}-${position}`;
-      const p = row.id === "back" ? { x: index - 1, y: 1, z: -1 }
-        : row.id === "right" ? { x: 1, y: 1, z: index - 1 }
-        : row.id === "front" ? { x: index - 1, y: 1, z: 1 }
-        : { x: -1, y: 1, z: index - 1 };
-      const n = row.id === "back" ? { x: 0, y: 0, z: -1 }
-        : row.id === "right" ? { x: 1, y: 0, z: 0 }
-        : row.id === "front" ? { x: 0, y: 0, z: 1 }
-        : { x: -1, y: 0, z: 0 };
-      stickers.push({ color, p, n, cell });
-    });
-  }
-  return stickers;
-}
-
-function rotatePLLVector(v, turns) {
-  let { x, y, z } = v;
-  const normalized = ((turns % 4) + 4) % 4;
-  for (let i = 0; i < normalized; i += 1) {
-    [x, z] = [-z, x];
-  }
-  return { x, y, z };
-}
-
-function pllCellFromSticker(sticker) {
-  const { p, n } = sticker;
-  if (n.z === -1) return `back-${PLL_STICKER_POSITIONS[p.x + 1]}`;
-  if (n.x === 1) return `right-${PLL_STICKER_POSITIONS[p.z + 1]}`;
-  if (n.z === 1) return `front-${PLL_STICKER_POSITIONS[p.x + 1]}`;
-  if (n.x === -1) return `left-${PLL_STICKER_POSITIONS[p.z + 1]}`;
-  return "";
-}
-
-function rotatePLLPattern(pattern, turns) {
-  const rotated = { back: Array(3), right: Array(3), front: Array(3), left: Array(3) };
-  for (const sticker of pllPatternStickers(pattern)) {
-    const next = {
-      color: sticker.color,
-      p: rotatePLLVector(sticker.p, turns),
-      n: rotatePLLVector(sticker.n, turns),
-    };
-    const cell = pllCellFromSticker(next);
-    const [side, position] = cell.split("-");
-    rotated[side][PLL_STICKER_POSITIONS.indexOf(position)] = sticker.color;
-  }
-  return rotated;
-}
-
 function pllPatternValue(pattern, cell) {
   const [side, position] = cell.split("-");
   return pattern?.[side]?.[PLL_STICKER_POSITIONS.indexOf(position)] || "";
 }
 
-function pllPatternRowsReady(pattern) {
-  return PLL_SIDE_ROWS
-    .filter((row) => (pattern[row.id] || []).every((color) => color === row.center))
-    .map((row) => row.id);
+function pllPatternGrid(pattern) {
+  return PLL_GRID_CELLS.map((cell) => pllPatternValue(pattern, cell));
+}
+
+function pllPaintGrid() {
+  return PLL_GRID_CELLS.map((cell) => state.pllPaint.stickers[cell] || "");
+}
+
+function pllGridRows(grid) {
+  return [0, 1, 2, 3].map((index) => grid.slice(index * 3, index * 3 + 3));
+}
+
+function transformPLLGrid(grid, startRow, direction, flipCells) {
+  const rows = pllGridRows(grid);
+  return [0, 1, 2, 3].flatMap((step) => {
+    const index = (startRow + direction * step + 8) % 4;
+    const row = rows[index] || [];
+    return flipCells ? row.slice().reverse() : row.slice();
+  });
+}
+
+function pllPatternVariants(pattern) {
+  const base = pllPatternGrid(pattern);
+  const variants = [];
+  const seen = new Set();
+  for (let startRow = 0; startRow < 4; startRow += 1) {
+    for (const direction of [1, -1]) {
+      for (const flipCells of [false, true]) {
+        const grid = transformPLLGrid(base, startRow, direction, flipCells);
+        const key = grid.join("|");
+        if (seen.has(key)) continue;
+        seen.add(key);
+        variants.push({ grid, startRow, direction, flipCells });
+      }
+    }
+  }
+  return variants;
+}
+
+function pllGridShapeMatch(candidateGrid, userGrid) {
+  const candidateToUser = {};
+  const userToCandidate = {};
+  let exactColorCount = 0;
+  let checked = 0;
+
+  for (let index = 0; index < userGrid.length; index += 1) {
+    const userColor = userGrid[index];
+    if (!userColor) continue;
+    const candidateColor = candidateGrid[index];
+    checked += 1;
+    if (candidateColor === userColor) exactColorCount += 1;
+    if (candidateToUser[candidateColor] && candidateToUser[candidateColor] !== userColor) return { ok: false, checked, exactColorCount };
+    if (userToCandidate[userColor] && userToCandidate[userColor] !== candidateColor) return { ok: false, checked, exactColorCount };
+    candidateToUser[candidateColor] = userColor;
+    userToCandidate[userColor] = candidateColor;
+  }
+
+  return { ok: true, checked, exactColorCount };
+}
+
+function pllGridSimilarity(candidateGrid, userGrid) {
+  const candidateToUser = {};
+  const userToCandidate = {};
+  let matched = 0;
+  let exactColorCount = 0;
+  let checked = 0;
+
+  for (let index = 0; index < userGrid.length; index += 1) {
+    const userColor = userGrid[index];
+    if (!userColor) continue;
+    const candidateColor = candidateGrid[index];
+    checked += 1;
+    const conflict = (candidateToUser[candidateColor] && candidateToUser[candidateColor] !== userColor)
+      || (userToCandidate[userColor] && userToCandidate[userColor] !== candidateColor);
+    if (!conflict) {
+      matched += 1;
+      if (candidateColor === userColor) exactColorCount += 1;
+      candidateToUser[candidateColor] = userColor;
+      userToCandidate[userColor] = candidateColor;
+    }
+  }
+
+  return { checked, matched, exactColorCount, misses: checked - matched };
+}
+
+function pllVariantText(variant) {
+  const start = variant.startRow ? `начиная со строки ${variant.startRow + 1}` : "начиная с первой строки";
+  const direction = variant.direction === 1 ? "в прямом обходе" : "в обратном обходе";
+  const flip = variant.flipCells ? ", ряды читаются справа налево" : "";
+  return `${start}, ${direction}${flip}`;
 }
 
 function pllPaintMatch(item) {
@@ -1195,40 +1229,50 @@ function pllPaintMatch(item) {
   const basePattern = PLL_CASE_PATTERNS[item.id];
   if (!basePattern) return { ok: true, score: 0, reasons: ["нет точного шаблона, сравни по карточке"] };
 
-  const rotations = [0, 1, 2, 3].map((turns) => ({ turns, pattern: rotatePLLPattern(basePattern, turns) }));
-  const matches = rotations.map(({ turns, pattern }) => {
-    let score = 0;
-    const reasons = [];
-    for (const [cell, color] of entries) {
-      if (pllPatternValue(pattern, cell) !== color) return { ok: false, score: 0, turns, reasons: [] };
-      score += 3;
-      if (reasons.length < 3) reasons.push(`${pllCellFriendlyName(cell)}: ${pllPaintColor(color).label.toLowerCase()}`);
-    }
-    const readyRows = pllPatternRowsReady(pattern);
-    score += readyRows.length * 4;
-    if (entries.length === 12) score += 30;
-    return { ok: true, score, turns, reasons, readyRows };
+  const userGrid = pllPaintGrid();
+  const complete = entries.length === 12;
+  const matches = pllPatternVariants(basePattern).map((variant) => {
+    const shape = pllGridShapeMatch(variant.grid, userGrid);
+    if (!shape.ok) return { ok: false, score: 0, reasons: [] };
+    const reasons = complete
+      ? [`рисунок 12 наклеек совпал`, pllVariantText(variant)]
+      : [`совпадает рисунок ${shape.checked} наклеек`, pllVariantText(variant)];
+    const score = shape.checked * 12
+      + shape.exactColorCount * 3
+      + (complete ? 120 : 0)
+      - (variant.direction === -1 ? 2 : 0)
+      - (variant.flipCells ? 1 : 0)
+      - variant.startRow;
+    return { ok: true, score, reasons, variant, exactColorCount: shape.exactColorCount };
   }).filter((match) => match.ok);
 
-  if (!matches.length) return { ok: false, score: 0, reasons: [], mismatch: "Раскраска не совпала с этим PLL." };
   matches.sort((a, b) => b.score - a.score);
-  const best = matches[0];
-  const aufText = best.turns ? `перед формулой нужен поворот U${best.turns === 2 ? "2" : best.turns === 1 ? "" : "'"}` : "ориентация уже совпадает";
-  return {
-    ok: true,
-    score: best.score,
-    reasons: entries.length === 12 ? [`12 наклеек совпали, ${aufText}`] : best.reasons,
-    turns: best.turns,
-  };
+  if (matches.length) return matches[0];
+
+  if (complete) {
+    const fuzzy = pllPatternVariants(basePattern)
+      .map((variant) => ({ ...pllGridSimilarity(variant.grid, userGrid), variant }))
+      .sort((a, b) => b.matched - a.matched || b.exactColorCount - a.exactColorCount || a.misses - b.misses)[0];
+    if (fuzzy && fuzzy.matched >= 10) {
+      return {
+        ok: true,
+        score: fuzzy.matched * 8 + fuzzy.exactColorCount * 2 - fuzzy.misses * 3,
+        reasons: [`похоже: ${fuzzy.matched} из 12 наклеек`, pllVariantText(fuzzy.variant)],
+        fuzzy: true,
+      };
+    }
+  }
+
+  return { ok: false, score: 0, reasons: [], mismatch: "Раскраска не совпала с этим PLL." };
 }
 
 function pllPaintHint(listLength) {
   const entries = pllPaintEntries();
-  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: четыре строки по три клетки. Начни с любой стороны и дальше иди по кругу вокруг кубика.";
-  if (!listLength) return "Совпадений нет. Проверь, что строки внесены по кругу вокруг верхнего слоя, а не в случайном порядке.";
+  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: четыре строки по три клетки. Начинать можно с любой стороны; главное — заноси строки подряд вокруг кубика.";
+  if (!listLength) return "Совпадений нет. Проверь одну-две наклейки: подбор уже учитывает поворот кубика, обратный обход и чтение ряда справа налево.";
   if (entries.length < 12) return `Закрашено ${entries.length} из 12. Чем больше наклеек отметишь, тем меньше вариантов останется.`;
-  if (listLength === 1) return "Полная раскраска дала один PLL. Открой разбор и сравни, как держать кубик перед формулой.";
-  return `Все 12 наклеек закрашены, но осталось ${listLength}. Проверь цвета или поверни верхний слой на кубике и сравни ещё раз.`;
+  if (listLength === 1) return "Полная раскраска дала один PLL. Открой разбор и сравни перестановку перед формулой.";
+  return `Все 12 наклеек закрашены, осталось ${listLength}. Это может быть зеркальная пара: сравни стрелки на карточках.`;
 }
 
 function renderPLLPalette() {
@@ -1895,7 +1939,14 @@ function filteredAlgorithms() {
     return list.sort((a, b) => f2lPaintMatch(b).score - f2lPaintMatch(a).score);
   }
   if (state.filter === "PLL" && hasPllPaint) {
-    return list.sort((a, b) => pllPaintMatch(b).score - pllPaintMatch(a).score);
+    const scored = list
+      .map((item) => ({ item, match: pllPaintMatch(item) }))
+      .sort((a, b) => b.match.score - a.match.score);
+    if (pllPaintEntries().length === 12 && scored.length > 1) {
+      const bestScore = scored[0].match.score;
+      return scored.filter(({ match }) => match.score === bestScore).map(({ item }) => item);
+    }
+    return scored.map(({ item }) => item);
   }
   return list;
 }
