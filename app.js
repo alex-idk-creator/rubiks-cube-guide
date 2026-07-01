@@ -40,7 +40,6 @@ const PLL_SIDE_ROWS = [
   { id: "front", label: "Спереди", center: "green", color: COLORS.F },
   { id: "left", label: "Слева", center: "orange", color: COLORS.L },
 ];
-const PLL_ROW_LABELS = Object.fromEntries(PLL_SIDE_ROWS.map((row) => [row.id, row.label.toLowerCase()]));
 const PLL_STICKER_POSITIONS = ["left", "middle", "right"];
 const PLL_CASE_PATTERNS = {
   "pll-h": { back: ["blue", "green", "blue"], right: ["red", "orange", "red"], front: ["green", "blue", "green"], left: ["orange", "red", "orange"] },
@@ -1118,43 +1117,11 @@ function pllPaintEntries() {
   return Object.entries(state.pllPaint.stickers).filter(([, color]) => color && color !== "gray");
 }
 
-function pllRowById(side) {
-  return PLL_SIDE_ROWS.find((row) => row.id === side) || PLL_SIDE_ROWS[0];
-}
-
 function pllCellFriendlyName(cell) {
   const [side, position] = cell.split("-");
   const map = { left: "левая", middle: "средняя", right: "правая" };
-  return `${map[position] || "наклейка"} верхнего слоя на стороне “${pllRowById(side).label}”`;
-}
-
-function pllRowStatus(side) {
-  const row = pllRowById(side);
-  const cells = PLL_STICKER_POSITIONS.map((position) => `${side}-${position}`);
-  const colors = cells.map((cell) => state.pllPaint.stickers[cell]).filter(Boolean);
-  const matching = colors.filter((color) => color === row.center).length;
-  const nonCenter = colors.filter((color) => color !== row.center).length;
-  return {
-    side,
-    label: row.label,
-    center: row.center,
-    painted: colors.length,
-    matching,
-    nonCenter,
-    ready: colors.length === 3 && matching === 3,
-  };
-}
-
-function pllPaintProfile() {
-  const statuses = PLL_SIDE_ROWS.map((row) => pllRowStatus(row.id));
-  return {
-    statuses,
-    readyRows: statuses.filter((row) => row.ready).map((row) => row.side),
-    paintedRows: statuses.filter((row) => row.painted > 0).length,
-    completeRows: statuses.filter((row) => row.painted === 3).length,
-    matchingCount: statuses.reduce((sum, row) => sum + row.matching, 0),
-    nonCenterCount: statuses.reduce((sum, row) => sum + row.nonCenter, 0),
-  };
+  const rowIndex = PLL_SIDE_ROWS.findIndex((row) => row.id === side) + 1;
+  return `${map[position] || "наклейка"} наклейка в строке ${rowIndex}`;
 }
 
 function pllPatternStickers(pattern) {
@@ -1257,9 +1224,8 @@ function pllPaintMatch(item) {
 
 function pllPaintHint(listLength) {
   const entries = pllPaintEntries();
-  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: по три на каждой стороне. Цветной квадрат “центр” рядом со строкой нужен только как ориентир.";
-  const paint = pllPaintProfile();
-  if (!listLength) return "Совпадений нет. Проверь порядок сторон: сзади, справа, спереди, слева. Средняя наклейка в строке тоже должна быть цветом верхнего слоя, а не центром.";
+  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: четыре строки по три клетки. Начни с любой стороны и дальше иди по кругу вокруг кубика.";
+  if (!listLength) return "Совпадений нет. Проверь, что строки внесены по кругу вокруг верхнего слоя, а не в случайном порядке.";
   if (entries.length < 12) return `Закрашено ${entries.length} из 12. Чем больше наклеек отметишь, тем меньше вариантов останется.`;
   if (listLength === 1) return "Полная раскраска дала один PLL. Открой разбор и сравни, как держать кубик перед формулой.";
   return `Все 12 наклеек закрашены, но осталось ${listLength}. Проверь цвета или поверни верхний слой на кубике и сравни ещё раз.`;
@@ -1288,12 +1254,8 @@ function renderPLLPaintRows() {
   };
   return `
     <div class="pll-strip-grid" aria-label="Раскраска четырех боковых полос PLL">
-      ${PLL_SIDE_ROWS.map((row) => `
-        <div class="pll-strip-row">
-          <div class="pll-strip-label">
-            <strong>${row.label}</strong>
-            <span class="pll-strip-center" style="background:${row.color}" title="центр ${row.label.toLowerCase()} стороны">${pllPaintColor(row.center).short}</span>
-          </div>
+      ${PLL_SIDE_ROWS.map((row, rowIndex) => `
+        <div class="pll-strip-row" aria-label="Строка ${rowIndex + 1}: три боковые наклейки верхнего слоя">
           <div class="pll-strip-cells">
             ${PLL_STICKER_POSITIONS.map((position) => stickerButton(row.id, position)).join("")}
           </div>
@@ -1343,14 +1305,14 @@ function pllSvg(visual) {
   const stripH = (side, y) => [0, 1, 2].map((index) => sideSticker(side, index, 94 + index * 48, y, 42, 24)).join("");
   const stripV = (side, x) => [0, 1, 2].map((index) => sideSticker(side, index, x, 82 + index * 45, 24, 39)).join("");
   const arrowPaths = {
-    cw: [`M119 82 C214 42 288 118 247 213`],
-    cycle: [`M119 82 C214 42 288 118 247 213`],
-    ccw: [`M247 82 C152 42 78 118 119 213`],
-    opposite: [`M165 88 L165 209`, `M104 149 L226 149`],
-    cross: [`M104 95 L226 204`, `M226 95 L104 204`],
-    diagonal: [`M108 94 L222 205`, `M222 94 L108 205`],
-    adjacent: [`M105 150 C130 91 201 90 225 150`, `M225 150 C200 210 130 210 105 150`],
-    swap: [`M103 149 L227 149`],
+    cw: [`M126 104 L204 104`, `M212 116 L212 184`, `M204 196 L126 196`, `M118 184 L118 116`],
+    cycle: [`M126 104 L204 104`, `M212 116 L212 184`, `M204 196 L126 196`, `M118 184 L118 116`],
+    ccw: [`M204 104 L126 104`, `M118 116 L118 184`, `M126 196 L204 196`, `M212 184 L212 116`],
+    opposite: [`M165 102 L165 198`, `M116 150 L214 150`],
+    cross: [`M124 108 L206 192`, `M206 108 L124 192`],
+    diagonal: [`M126 112 L204 190`, `M204 112 L126 190`],
+    adjacent: [`M118 150 C126 110 166 94 206 112`, `M212 150 C204 190 164 206 124 188`],
+    swap: [`M118 150 L212 150`],
   }[visual.arrows] || [`M103 149 L227 149`];
   const twoWay = ["opposite", "cross", "diagonal", "swap"].includes(visual.arrows);
   return `
@@ -1922,7 +1884,7 @@ function filteredAlgorithms() {
   const hasPllPaint = pllPaintEntries().length > 0;
   const list = algorithms.filter((item) => {
     const stageOk = item.stage === state.filter;
-    const levelOk = allowedLevels.includes(item.level);
+    const levelOk = state.filter === "PLL" && hasPllPaint ? true : allowedLevels.includes(item.level);
     const finderOk = !finderOption || finderOption.match(item);
     const f2lOk = item.stage !== "F2L" || f2lPaintMatch(item).ok;
     const pllOk = item.stage !== "PLL" || pllPaintMatch(item).ok;
@@ -2171,39 +2133,6 @@ function renderCaseFinder(list) {
     </div>`;
 }
 
-function pllFinderSvg() {
-  const selected = state.finder;
-  const blockByFinder = {
-    "pll-block-back": "back",
-    "pll-block-front": "front",
-    "pll-block-left": "left",
-    "pll-block-right": "right",
-  }[selected];
-  const stripColor = (side) => blockByFinder === side ? "var(--accent)" : "var(--cube-muted)";
-  const stripOpacity = (side) => !blockByFinder || blockByFinder === side ? 1 : 0.36;
-  const sideName = {
-    back: "сзади",
-    front: "спереди",
-    left: "слева",
-    right: "справа",
-  }[blockByFinder] || "пока не выбран";
-  const cell = (x, y, fill = COLORS.U) => `<rect x="${x}" y="${y}" width="34" height="34" rx="7" fill="${fill}" stroke="var(--cube-line)" stroke-width="2"/>`;
-  return `
-    <svg class="pll-finder-svg" viewBox="0 0 300 300" role="img" aria-label="Подбор PLL по четырем боковым сторонам верхнего слоя">
-      <text x="150" y="24" text-anchor="middle" class="svg-note">желтый верх, смотри на боковые полосы</text>
-      <rect x="78" y="78" width="144" height="144" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
-      ${Array.from({ length: 9 }).map((_, index) => cell(92 + (index % 3) * 40, 92 + Math.floor(index / 3) * 40)).join("")}
-      <rect x="88" y="48" width="124" height="18" rx="7" fill="${stripColor("back")}" opacity="${stripOpacity("back")}" stroke="var(--cube-line)" stroke-width="3"/>
-      <rect x="88" y="234" width="124" height="18" rx="7" fill="${stripColor("front")}" opacity="${stripOpacity("front")}" stroke="var(--cube-line)" stroke-width="3"/>
-      <rect x="48" y="88" width="18" height="124" rx="7" fill="${stripColor("left")}" opacity="${stripOpacity("left")}" stroke="var(--cube-line)" stroke-width="3"/>
-      <rect x="234" y="88" width="18" height="124" rx="7" fill="${stripColor("right")}" opacity="${stripOpacity("right")}" stroke="var(--cube-line)" stroke-width="3"/>
-      ${selected === "pll-no-block" ? `<circle cx="150" cy="150" r="45" fill="none" stroke="var(--accent)" stroke-width="6" stroke-dasharray="11 9"/><text x="150" y="157" text-anchor="middle" class="svg-label">нет блока</text>` : ""}
-      ${selected === "pll-edges" ? `<text x="150" y="151" text-anchor="middle" class="svg-label">углы стоят</text><text x="150" y="172" text-anchor="middle" class="svg-note">двигаются ребра</text>` : ""}
-      ${selected === "pll-corners" ? `<circle cx="104" cy="104" r="8" fill="var(--accent)"/><circle cx="196" cy="104" r="8" fill="var(--accent)"/><circle cx="104" cy="196" r="8" fill="var(--accent)"/><circle cx="196" cy="196" r="8" fill="var(--accent)"/>` : ""}
-      <text x="150" y="282" text-anchor="middle" class="svg-note">готовый блок: ${sideName}</text>
-    </svg>`;
-}
-
 function renderPLLFinder(list) {
   const paintedCount = pllPaintEntries().length;
   return `
@@ -2212,7 +2141,7 @@ function renderPLLFinder(list) {
         <div class="pll-finder-visual pll-strip-panel">
           <p class="eyebrow">Подобрать PLL</p>
           <h3>Раскрась четыре боковые полоски</h3>
-          <p>Жёлтый верх уже собран. В каждой строке раскрась все три боковые наклейки верхнего слоя. Маленький цветной квадрат рядом со стороной — это центр-ориентир, его не раскрашивают.</p>
+          <p>Жёлтый верх уже собран. Раскрась четыре строки по три наклейки: это боковые наклейки верхнего слоя. Начинай с любой стороны, но остальные строки заноси по кругу вокруг кубика.</p>
           ${renderPLLPaintRows()}
           ${renderPLLPalette()}
           <div class="paint-actions">
@@ -2220,14 +2149,14 @@ function renderPLLFinder(list) {
             <button class="text-button" data-reset-pll-paint>Сбросить PLL</button>
           </div>
         </div>
-        <div class="pll-side-picker pll-paint-help">
+        <div class="pll-paint-help">
           <h4>${paintedCount ? `Подходит: ${list.length}` : "Сначала перенеси цвета с кубика"}</h4>
           <p>${pllPaintHint(list.length)}</p>
           <ol>
             <li>Держи белый снизу, жёлтый сверху.</li>
-            <li>Смотри на четыре боковые стороны верхнего слоя: сзади, справа, спереди, слева.</li>
-            <li>В каждой строке раскрась три наклейки верхнего слоя: левую, среднюю и правую.</li>
-            <li>Если все три наклейки строки совпали с центром стороны, это готовая боковая полоса.</li>
+            <li>Выбери любую боковую сторону верхнего слоя как первую строку.</li>
+            <li>Следующие три строки внеси по кругу вокруг кубика.</li>
+            <li>В каждой строке раскрась левую, среднюю и правую наклейку верхнего слоя.</li>
           </ol>
           <p class="finder-result"><strong>${list.length}</strong> подходящих PLL. Открой карточку, чтобы увидеть перестановку крупно.</p>
         </div>
@@ -2482,6 +2411,7 @@ document.addEventListener("click", async (event) => {
     const color = state.pllPaint.selectedColor;
     if (color === "gray") delete state.pllPaint.stickers[cell];
     else state.pllPaint.stickers[cell] = color;
+    state.level = "all";
     selectFirstVisible();
     render();
     return;

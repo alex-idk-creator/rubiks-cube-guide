@@ -793,7 +793,7 @@ button {
 }
 
 .pll-finder-visual,
-.pll-side-picker {
+.pll-paint-help {
   display: grid;
   gap: 10px;
   padding: 12px;
@@ -803,22 +803,8 @@ button {
 }
 
 .pll-finder-visual h3,
-.pll-side-picker p {
+.pll-paint-help p {
   margin: 0;
-}
-
-.pll-finder-svg {
-  width: 100%;
-  max-width: 330px;
-  margin-inline: auto;
-}
-
-.pll-buttons {
-  grid-column: auto;
-}
-
-.pll-side-button {
-  text-align: left;
 }
 
 .pll-paint-finder {
@@ -857,39 +843,25 @@ button {
 }
 
 .pll-strip-row {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  padding: 9px;
+  display: block;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
 }
 
-.pll-strip-row strong {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.pll-strip-label {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 36px;
-  align-items: center;
-  gap: 8px;
-}
-
 .pll-strip-cells {
   display: grid;
   grid-template-columns: repeat(3, minmax(44px, 1fr));
-  gap: 7px;
+  gap: 8px;
+  padding: 8px;
 }
 
-.pll-strip-sticker,
-.pll-strip-center {
+.pll-strip-sticker {
   display: grid;
   place-items: center;
-  min-height: 46px;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
   border: 2px solid var(--cube-line);
   border-radius: 8px;
   color: #fff;
@@ -917,12 +889,6 @@ button {
 
 .pll-strip-sticker:not(.painted) span {
   color: transparent;
-}
-
-.pll-strip-center {
-  min-height: 36px;
-  width: 36px;
-  box-shadow: inset 0 0 0 3px rgba(255,255,255,.22);
 }
 
 .pll-palette {
@@ -2115,11 +2081,6 @@ button {
 
   .paint-palette button {
     min-height: 58px;
-  }
-
-  .pll-strip-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
   }
 
   .wizard-options {
