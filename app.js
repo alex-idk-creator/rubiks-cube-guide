@@ -1292,7 +1292,7 @@ function renderPLLPaintRows() {
     const colorId = state.pllPaint.stickers[cell];
     const color = colorId ? pllPaintColor(colorId) : null;
     return `
-      <button class="pll-strip-sticker ${colorId ? "painted" : ""}" data-pll-paint-cell="${cell}" style="background:${color ? color.value : "var(--cube-muted)"}" title="${pllCellFriendlyName(cell)}">
+      <button class="pll-strip-sticker ${colorId ? "painted" : ""}" data-pll-paint-cell="${cell}" style="background:${color ? color.value : "var(--cube-muted)"}" aria-label="${pllCellFriendlyName(cell)}" title="${pllCellFriendlyName(cell)}">
         <span>${color ? color.short : ""}</span>
       </button>`;
   };
@@ -1300,11 +1300,36 @@ function renderPLLPaintRows() {
     <div class="pll-strip-grid" aria-label="Раскраска четырех боковых полос PLL">
       ${PLL_SIDE_ROWS.map((row, rowIndex) => `
         <div class="pll-strip-row" aria-label="Строка ${rowIndex + 1}: три боковые наклейки верхнего слоя">
+          <span class="pll-strip-number">${rowIndex + 1}</span>
           <div class="pll-strip-cells">
             ${PLL_STICKER_POSITIONS.map((position) => stickerButton(row.id, position)).join("")}
           </div>
         </div>`).join("")}
     </div>`;
+}
+
+function pllHoldSvg() {
+  const strip = (x, y, text, active = false) => `
+    <g>
+      <rect x="${x}" y="${y}" width="78" height="24" rx="7" fill="${active ? "var(--accent-soft)" : "var(--surface)"}" stroke="${active ? "var(--accent)" : "var(--line)"}" stroke-width="${active ? 3 : 2}"/>
+      <text x="${x + 39}" y="${y + 16}" text-anchor="middle" class="svg-mini-label">${text}</text>
+    </g>`;
+  return `
+    <svg class="pll-hold-svg" viewBox="0 0 250 190" role="img" aria-label="Как держать кубик для PLL-подбора">
+      <text x="125" y="22" text-anchor="middle" class="svg-note">желтый сверху, белый снизу</text>
+      <rect x="76" y="54" width="98" height="98" rx="15" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="5"/>
+      ${Array.from({ length: 9 }).map((_, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        return `<rect x="${88 + col * 28}" y="${66 + row * 28}" width="24" height="24" rx="5" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>`;
+      }).join("")}
+      ${strip(86, 30, "3")}
+      ${strip(86, 158, "1", true)}
+      <g transform="translate(48 64) rotate(90 12 39)">${strip(0, 0, "4")}</g>
+      <g transform="translate(202 64) rotate(90 12 39)">${strip(0, 0, "2")}</g>
+      <path d="M179 158 C208 142 211 91 184 67" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M184 67 L196 70 L188 80" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
 }
 
 function ollSvg(visual) {
@@ -2203,11 +2228,18 @@ function renderPLLFinder(list) {
         <div class="pll-paint-help">
           <h4>${paintedCount ? `Подходит: ${list.length}` : "Сначала перенеси цвета с кубика"}</h4>
           <p>${pllPaintHint(list.length)}</p>
+          <div class="pll-hold-card">
+            <div>
+              <p class="eyebrow">Как держать</p>
+              <h4>Строка 1 — сторона, которая смотрит на тебя</h4>
+              <p>Белый держи снизу, жёлтый сверху. Выбери любую боковую сторону как первую строку, потом поворачивай весь куб по кругу и заноси строки 2, 3 и 4.</p>
+            </div>
+            ${pllHoldSvg()}
+          </div>
           <ol>
-            <li>Держи белый снизу, жёлтый сверху.</li>
-            <li>Выбери любую боковую сторону верхнего слоя как первую строку.</li>
-            <li>Следующие три строки внеси по кругу вокруг кубика.</li>
-            <li>В каждой строке раскрась левую, среднюю и правую наклейку верхнего слоя.</li>
+            <li>Не смотри на центры: для PLL нужны только боковые наклейки верхнего слоя.</li>
+            <li>В каждой строке раскрась три клетки: слева, посередине и справа.</li>
+            <li>Если ошибся, выбери “Стереть” и нажми на лишнюю клетку.</li>
           </ol>
           <p class="finder-result"><strong>${list.length}</strong> подходящих PLL. Открой карточку, чтобы увидеть перестановку крупно.</p>
         </div>
