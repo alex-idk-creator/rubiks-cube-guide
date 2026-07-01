@@ -1376,10 +1376,10 @@ function renderMoveVisualSteps(item) {
     <section class="case-section move-visual-section">
       <div class="case-section-heading">
         <p class="eyebrow">Ходы руками</p>
-        <h3>Каждая буква с мини-схемой</h3>
-        <p>Передняя грань на этих схемах смотрит прямо на тебя. Сверяй стрелку под ходом, если буквы пока путаются.</p>
+        <h3>Пошагово сразу под формулой</h3>
+        <p>Передняя грань на этих схемах смотрит прямо на тебя. Под каждым ходом есть маленькая схема и короткий перевод на действие руками.</p>
       </div>
-      <div class="move-step-grid ${moveTokens.length > 14 ? "dense" : ""}">
+      <div class="move-step-grid ${moveTokens.length >= 12 ? "dense" : ""}">
         ${moveTokens.map((token, index) => {
           const moveItem = notationForToken(token);
           return `
@@ -1438,9 +1438,9 @@ function renderCaseDetail(item) {
           <button class="copy-button" data-copy="${item.alg}">Копировать формулу</button>
         </div>
       </div>
+      ${renderMoveVisualSteps(item)}
       ${renderF2LRecognitionBoard(item)}
       ${firstF2LTimeline(item)}
-      ${renderMoveVisualSteps(item)}
       ${renderFormulaAlternatives(item)}
       ${renderActionGuide(item)}
     </section>`;
