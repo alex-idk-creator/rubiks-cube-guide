@@ -549,6 +549,8 @@ function frontArrow(face, dir) {
   if (face === "U") return reverse ? arrow("M110 74 L222 74") : arrow("M222 74 L110 74");
   if (face === "D" || face === "Dw") return reverse ? arrow("M222 190 L110 190") : arrow("M110 190 L222 190");
   if (face === "M") return arrow(reverse ? "M166 184 L166 82" : "M166 82 L166 184");
+  if (face === "F") return reverse ? arrow("M226 116 C194 80 138 80 106 116") : arrow("M106 116 C138 80 194 80 226 116");
+  if (face === "B") return reverse ? arrow("M106 206 C138 242 194 242 226 206") : arrow("M226 206 C194 242 138 242 106 206");
   if (face === "cube") {
     return reverse
       ? `${arrow("M126 54 C70 74 48 154 74 216")}${arrow("M204 220 C264 198 286 118 256 54")}`
