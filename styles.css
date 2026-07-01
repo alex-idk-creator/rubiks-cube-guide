@@ -1030,6 +1030,13 @@ button {
   overflow: visible;
 }
 
+.paint-orientation-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin-inline: auto;
+}
+
 .paint-cell {
   cursor: pointer;
   transition: opacity 150ms ease, stroke-width 150ms ease, filter 150ms ease;
