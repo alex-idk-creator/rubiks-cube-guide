@@ -496,7 +496,7 @@ function frontLayerCells(face) {
 
 function frontArrow(face, dir) {
   const arrow = (d) => `<g class="front-turn-arrow"><path class="arrow-outline" d="${d}"/><path class="arrow-line" d="${d}" marker-end="url(#frontArrow)"/></g>`;
-  const reverse = dir === "ccw";
+  const reverse = dir === "ccw" || dir === "turn-ccw";
   if (dir === "double") {
     const label = `<text x="166" y="252" text-anchor="middle" class="svg-label">180°</text>`;
     if (face === "R" || face === "Rw") return `${arrow("M218 184 L218 82")}${arrow("M240 82 L240 184")}${label}`;
@@ -551,6 +551,7 @@ function notationSvg(item, options = {}) {
     M: "средний слой",
     cube: "весь кубик",
   }[face];
+  const directionLabel = item.dir === "ccw" || item.dir === "turn-ccw" ? "обратно" : item.dir === "double" ? "два раза" : "по стрелке";
   return `
     <svg class="notation-svg ${compact ? "mini-notation-svg" : ""}" viewBox="${compact ? "0 30 332 236" : "0 0 332 286"}" role="img" aria-label="Ход ${item.move}: ${faceLabel}">
       <defs>
@@ -569,7 +570,7 @@ function notationSvg(item, options = {}) {
       }).join("")}
       ${frontArrow(face, item.dir)}
       ${compact ? "" : `<text x="166" y="20" text-anchor="middle" class="svg-note">передняя грань смотрит на тебя</text>
-      <text x="166" y="274" text-anchor="middle" class="svg-note">${faceLabel}: ${item.dir === "ccw" ? "обратно" : item.dir === "double" ? "два раза" : "по стрелке"}</text>`}
+      <text x="166" y="274" text-anchor="middle" class="svg-note">${faceLabel}: ${directionLabel}</text>`}
     </svg>
   `;
 }
@@ -1255,31 +1256,42 @@ function f2lDetailIsLeft(item) {
   return String(visual.slot || "FR").includes("L");
 }
 
-function holdFaceCell(row, col, fill, active = false) {
-  const size = 46;
-  const gap = 5;
-  const x = 28 + col * (size + gap);
-  const y = 32 + row * (size + gap);
-  return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="8" fill="${fill}" opacity="${active ? 1 : 0.36}" stroke="var(--cube-line)" stroke-width="${active ? 4 : 2}"/>`;
-}
-
 function holdF2LSvg(item) {
   const left = f2lDetailIsLeft(item);
   const sideColor = left ? COLORS.L : COLORS.R;
   const sideName = left ? "оранжевая левая сторона" : "красная правая сторона";
+  const frontX = left ? 152 : 24;
+  const sideX = left ? 24 : 152;
   const whiteCell = left ? "02" : "00";
-  return `
-    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 196 216" role="img" aria-label="Как держать кубик: ${sideName} слота, белый угол сверху, два цветных ориентира по центру">
-      <rect x="18" y="22" width="160" height="160" rx="18" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="5"/>
-      ${Array.from({ length: 9 }).map((_, index) => {
-        const row = Math.floor(index / 3);
-        const col = index % 3;
+  const cellSize = 34;
+  const gap = 4;
+  const flatCell = (x, y, row, col, fill, active = false) =>
+    `<rect x="${x + col * (cellSize + gap)}" y="${y + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 3.5 : 2}"/>`;
+  const flatFace = (x, y, color, label, type) => {
+    const tiles = [];
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 3; col += 1) {
         const key = `${row}${col}`;
-        if (key === whiteCell) return holdFaceCell(row, col, COLORS.D, true);
-        if (key === "11" || key === "21") return holdFaceCell(row, col, sideColor, true);
-        return holdFaceCell(row, col, "var(--cube-muted)", false);
-      }).join("")}
-      <text x="98" y="202" text-anchor="middle" class="svg-note">${left ? "эта сторона слева" : "эта сторона справа"}</text>
+        const centerOrBelow = key === "11" || key === "21";
+        const whiteCorner = type === "side" && key === whiteCell;
+        const fill = whiteCorner ? COLORS.D : centerOrBelow ? color : "var(--cube-muted)";
+        tiles.push(flatCell(x, y, row, col, fill, centerOrBelow || whiteCorner));
+      }
+    }
+    return `
+      <g>
+        <rect x="${x - 7}" y="${y - 7}" width="124" height="124" rx="16" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="4"/>
+        ${tiles.join("")}
+        <text x="${x + 55}" y="${y + 133}" text-anchor="middle" class="svg-note">${label}</text>
+      </g>`;
+  };
+  return `
+    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 286 224" role="img" aria-label="Как держать кубик: зелёная передняя грань и ${sideName} слота, белый угол сверху на боковой стороне">
+      <text x="143" y="20" text-anchor="middle" class="svg-note">плоско: сторона перед тобой и сторона слота</text>
+      <rect x="94" y="34" width="98" height="14" rx="6" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>
+      <rect x="94" y="178" width="98" height="14" rx="6" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="2"/>
+      ${flatFace(frontX, 56, COLORS.F, "перед", "front")}
+      ${flatFace(sideX, 56, sideColor, left ? "слева" : "справа", "side")}
     </svg>`;
 }
 
@@ -1288,7 +1300,6 @@ function renderHoldOrientation(item) {
     const left = f2lDetailIsLeft(item);
     const colors = slotPalette(left ? "FL" : "FR");
     const sideText = left ? "оранжевую сторону" : "красную сторону";
-    const sideShown = left ? "оранжевая сторона" : "красная сторона";
     const sideLabel = left ? "Слева" : "Справа";
     return `
       <div class="hold-orientation">
@@ -1301,8 +1312,8 @@ function renderHoldOrientation(item) {
             <span><i style="background:${left ? COLORS.L : COLORS.R}"></i>${sideLabel}: ${colors.sideColorName}</span>
             <span><i style="background:${COLORS.D}"></i>Низ: белый</span>
           </div>
-          <p>Перед формулой держи ${colors.frontColorName} центр перед собой, а ${sideText} — ${left ? "слева" : "справа"}. На рисунке отдельно показана именно эта ${sideShown}, чтобы не путаться в 3D.</p>
-          <p>${left ? "Белая наклейка угла должна быть сверху-справа на этой стороне." : "Белая наклейка угла должна быть сверху-слева на этой стороне."} Две цветные наклейки по центру показывают собранный ориентир после правильного белого креста.</p>
+          <p>Перед формулой держи ${colors.frontColorName} центр перед собой, а ${sideText} — ${left ? "слева" : "справа"}. Рисунок плоский: он показывает переднюю грань и сторону слота рядом, без кривого 3D.</p>
+          <p>${left ? "Белая наклейка угла должна быть сверху-справа на боковой стороне." : "Белая наклейка угла должна быть сверху-слева на боковой стороне."} Цветные центр и наклейка под центром показывают собранные ориентиры после правильного белого креста.</p>
         </div>
         ${holdF2LSvg(item)}
       </div>`;
