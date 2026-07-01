@@ -958,7 +958,7 @@ function f2lPaintHint(listLength) {
   if (!state.f2lPaint.stickers.F11 || !state.f2lPaint.stickers.R11) return "Чтобы боковые цвета стали относительными, отметь оба центра слота.";
   if (!entries.some(([, color]) => color === "white")) return "Теперь отметь белую наклейку угла.";
   if (listLength > 8) return "Чтобы сузить список, добавь две наклейки ребра или вторую боковую наклейку угла.";
-  if (!listLength) return "Совпадений нет. Проверь, что слот поставлен спереди справа, а цвета центров не перепутаны.";
+  if (!listLength) return "Совпадений нет. Проверь, что ты повернул весь куб так, чтобы нужный слот был спереди справа, а цвета центров не перепутаны.";
   return "Список уже узкий: открой подходящую карточку и сравни крупную схему.";
 }
 
@@ -994,7 +994,37 @@ function f2lPaintSvg() {
         ${paintPickerFaceTiles("F")}
         ${paintPickerFaceTiles("R")}
       </g>
-      <text x="165" y="264" text-anchor="middle" class="svg-note">слот поставь спереди справа</text>
+      <text x="165" y="264" text-anchor="middle" class="svg-note">рабочий вид: слот спереди справа</text>
+    </svg>`;
+}
+
+function f2lPaintOrientationSvg() {
+  const hSlot = (x, y, label, active = false) => `
+    <g>
+      <rect x="${x}" y="${y}" width="116" height="24" rx="8" fill="${active ? "var(--accent)" : "var(--cube-muted)"}" opacity="${active ? 1 : 0.38}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>
+      <text x="${x + 58}" y="${y + 17}" text-anchor="middle" class="svg-note">${label}</text>
+    </g>`;
+  const vSlot = (x, y, label, active = false) => `
+    <g>
+      <rect x="${x}" y="${y}" width="24" height="116" rx="8" fill="${active ? "var(--accent)" : "var(--cube-muted)"}" opacity="${active ? 1 : 0.38}" stroke="var(--cube-line)" stroke-width="${active ? 3 : 2}"/>
+      <text x="${x + 12}" y="${y + 63}" text-anchor="middle" class="svg-note" transform="rotate(-90 ${x + 12} ${y + 63})">${label}</text>
+    </g>`;
+  return `
+    <svg class="paint-orientation-svg" viewBox="0 0 300 238" role="img" aria-label="Как поставить F2L-слот для подбора: поверни весь куб, чтобы слот был спереди справа">
+      <text x="150" y="22" text-anchor="middle" class="svg-note">перед раскраской поверни весь куб целиком</text>
+      ${hSlot(92, 36, "сзади")}
+      ${hSlot(92, 190, "спереди", true)}
+      ${vSlot(56, 74, "слева")}
+      ${vSlot(220, 74, "справа", true)}
+      <rect x="90" y="64" width="120" height="120" rx="18" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="5"/>
+      ${Array.from({ length: 9 }).map((_, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        return `<rect x="${102 + col * 36}" y="${76 + row * 36}" width="30" height="30" rx="6" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>`;
+      }).join("")}
+      <path d="M208 184 L226 202" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M224 190 L230 207 L213 201" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="150" y="228" text-anchor="middle" class="svg-note">цель: передний правый слот</text>
     </svg>`;
 }
 
@@ -1948,7 +1978,7 @@ function renderF2LPainter(list) {
       <div class="paint-intro">
         <p class="eyebrow">Подобрать F2L</p>
         <h3>Раскрась угол, ребро и слот вместо ответов на вопросы</h3>
-        <p>Держи белый снизу, жёлтый сверху. Поверни куб так, чтобы слот, который собираешь, был спереди справа. Отметь два центра слота, белый угол и ребро пары; всё лишнее оставь серым.</p>
+        <p>Держи белый снизу, жёлтый сверху. Подбор работает в рабочем положении: поверни весь куб целиком так, чтобы слот, который собираешь, оказался спереди справа. Потом отметь два центра слота, белый угол и ребро пары; всё лишнее оставь серым.</p>
       </div>
       <div class="paint-workspace">
         <div class="paint-cube-panel">
@@ -1963,8 +1993,10 @@ function renderF2LPainter(list) {
         <div class="paint-help">
           <h4>${paintedCount ? `Подходит: ${list.length}` : "Сначала раскрась важные наклейки"}</h4>
           <p>${f2lPaintHint(list.length)}</p>
+          ${f2lPaintOrientationSvg()}
           <ol>
-            <li>Поставь нужный слот спереди справа.</li>
+            <li>Если слот сейчас слева или сзади, поверни весь куб, а не верхний слой.</li>
+            <li>Поставь нужный слот в рабочее положение: спереди справа.</li>
             <li>Закрась передний и боковой центры реальными цветами своего кубика.</li>
             <li>Закрась наклейки белого угла и ребра пары.</li>
             <li>Боковые цвета считаются относительными: зелёно-оранжевый слот сравнивается так же, как зелёно-красный.</li>
