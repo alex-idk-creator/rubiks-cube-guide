@@ -1286,13 +1286,14 @@ function f2lDetailIsLeft(item) {
   return String(visual.slot || "FR").includes("L");
 }
 
-function holdF2LSvg(item) {
+function holdF2LSvg(item, options = {}) {
   const left = f2lDetailIsLeft(item);
   const sideColor = left ? COLORS.L : COLORS.R;
   const sideName = left ? "оранжевая левая сторона" : "красная правая сторона";
   const frontX = left ? 152 : 24;
   const sideX = left ? 24 : 152;
   const whiteCell = left ? "02" : "00";
+  const showWhiteCorner = Boolean(options.showWhiteCorner);
   const cellSize = 34;
   const gap = 4;
   const flatCell = (x, y, row, col, fill, active = false) =>
@@ -1303,7 +1304,7 @@ function holdF2LSvg(item) {
       for (let col = 0; col < 3; col += 1) {
         const key = `${row}${col}`;
         const centerOrBelow = key === "11" || key === "21";
-        const whiteCorner = type === "side" && key === whiteCell;
+        const whiteCorner = showWhiteCorner && type === "side" && key === whiteCell;
         const fill = whiteCorner ? COLORS.D : centerOrBelow ? color : "var(--cube-muted)";
         tiles.push(flatCell(x, y, row, col, fill, centerOrBelow || whiteCorner));
       }
@@ -1316,7 +1317,7 @@ function holdF2LSvg(item) {
       </g>`;
   };
   return `
-    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 286 224" role="img" aria-label="Как держать кубик: зелёная передняя грань и ${sideName} слота, белый угол сверху на боковой стороне">
+    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 286 224" role="img" aria-label="Как держать кубик: зелёная передняя грань и ${sideName} слота">
       <text x="143" y="20" text-anchor="middle" class="svg-note">держи: передняя грань + сторона слота</text>
       <rect x="94" y="34" width="98" height="14" rx="6" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>
       <rect x="94" y="178" width="98" height="14" rx="6" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="2"/>
@@ -1331,6 +1332,7 @@ function renderHoldOrientation(item) {
     const colors = slotPalette(left ? "FL" : "FR");
     const sideText = left ? "оранжевую сторону" : "красную сторону";
     const sideLabel = left ? "Слева" : "Справа";
+    const isBaseInsert = item.id === "f2l-1" || item.id === "f2l-2";
     return `
       <div class="hold-orientation">
         <div class="hold-copy">
@@ -1343,9 +1345,11 @@ function renderHoldOrientation(item) {
             <span><i style="background:${COLORS.D}"></i>Низ: белый</span>
           </div>
           <p>Перед формулой не поворачивай красную или оранжевую грань к себе. Держи ${colors.frontColorName} центр перед собой, белый снизу, жёлтый сверху, а ${sideText} — ${left ? "слева" : "справа"}.</p>
-          <p>Схема рядом плоская: она показывает переднюю грань и сторону слота как ориентиры хвата. ${left ? "Белая наклейка угла должна быть сверху-справа на боковой стороне." : "Белая наклейка угла должна быть сверху-слева на боковой стороне."}</p>
+          <p>${isBaseInsert
+            ? `Схема рядом показывает именно базовую вставку: ${left ? "белая наклейка угла сверху-справа на боковой стороне." : "белая наклейка угла сверху-слева на боковой стороне."}`
+            : "Схема рядом показывает только хват и цвета слота. Положение белого угла и ребра смотри на большой цветной схеме этого случая, а не в этом маленьком окошке."}</p>
         </div>
-        ${holdF2LSvg(item)}
+        ${holdF2LSvg(item, { showWhiteCorner: isBaseInsert })}
       </div>`;
   }
   if (item.stage === "OLL") {
