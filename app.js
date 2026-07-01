@@ -647,11 +647,54 @@ function notationForToken(token) {
   };
 }
 
-function slotPalette(slot = "FR") {
-  const side = slot.includes("L") ? COLORS.L : COLORS.R;
-  const sideName = slot.includes("L") ? "левая" : "правая";
-  const sideColorName = slot.includes("L") ? "оранжевый" : "красный";
-  return { down: COLORS.D, front: COLORS.F, side, sideName, frontColorName: "зелёный", sideColorName };
+function slotPalette(slot = "FR", overrides = {}) {
+  const left = slot.includes("L");
+  const side = left ? COLORS.L : COLORS.R;
+  const sideName = left ? "левая" : "правая";
+  const sideColorName = left ? "оранжевый" : "красный";
+  return {
+    up: overrides.up || COLORS.U,
+    down: overrides.down || COLORS.D,
+    front: overrides.front || COLORS.F,
+    side: overrides.side || side,
+    sideName,
+    frontId: overrides.frontId || "green",
+    sideId: overrides.sideId || (left ? "orange" : "red"),
+    frontColorName: overrides.frontColorName || "зелёный",
+    sideColorName: overrides.sideColorName || sideColorName,
+    hasPaint: Boolean(overrides.hasPaint),
+    hasSlotColors: Boolean(overrides.hasSlotColors),
+  };
+}
+
+function sideColorOption(id) {
+  return F2L_SIDE_COLORS.has(id) ? paintColor(id) : null;
+}
+
+function f2lVisualIsLeft(visual = {}) {
+  if (visual.type === "f2l-source") return Boolean(visual.mirror);
+  return String(visual.slot || "FR").includes("L");
+}
+
+function f2lColorContext(target = {}) {
+  const visual = target.visual || target || {};
+  const left = f2lVisualIsLeft(visual);
+  const defaults = slotPalette(left ? "FL" : "FR");
+  const frontPick = sideColorOption(state.f2lPaint.stickers.F11);
+  const sidePick = sideColorOption(state.f2lPaint.stickers.R11);
+  const sideIsUsable = sidePick && sidePick.id !== frontPick?.id;
+  return slotPalette(left ? "FL" : "FR", {
+    up: COLORS.U,
+    down: COLORS.D,
+    front: frontPick?.value || defaults.front,
+    side: sideIsUsable ? sidePick.value : defaults.side,
+    frontId: frontPick?.id || defaults.frontId,
+    sideId: sideIsUsable ? sidePick.id : defaults.sideId,
+    frontColorName: (frontPick?.label || defaults.frontColorName).toLowerCase(),
+    sideColorName: (sideIsUsable ? sidePick.label : defaults.sideColorName).toLowerCase(),
+    hasPaint: paintEntries().length > 0,
+    hasSlotColors: Boolean(frontPick && sideIsUsable),
+  });
 }
 
 function putStickerSet(fills, stickers = {}) {
@@ -769,14 +812,13 @@ const visibleCubies = [
   ["R20"],
 ];
 
-function sourceStickerMap(visual) {
+function sourceStickerMap(visual, colors = f2lColorContext(visual)) {
   const raw = String(visual.fl || "").slice(0, 27).padEnd(27, "l");
-  const sideColor = visual.mirror ? COLORS.L : COLORS.R;
   const colorByCode = {
-    g: COLORS.F,
-    o: sideColor,
-    w: COLORS.D,
-    y: COLORS.U,
+    g: colors.front,
+    o: colors.side,
+    w: colors.down,
+    y: colors.up,
     r: COLORS.R,
     b: COLORS.B,
   };
@@ -833,14 +875,14 @@ function f2lExpectedRoleMap(item) {
   };
 }
 
-function physicalF2LFills(visual) {
-  const rawMap = sourceStickerMap(visual);
+function physicalF2LFills(visual, colors = f2lColorContext(visual)) {
+  const rawMap = sourceStickerMap(visual, colors);
   const fills = {
-    U11: COLORS.U,
-    F11: COLORS.F,
-    F21: COLORS.F,
-    R11: visual.mirror ? COLORS.L : COLORS.R,
-    R21: visual.mirror ? COLORS.L : COLORS.R,
+    U11: colors.up,
+    F11: colors.front,
+    F21: colors.front,
+    R11: colors.side,
+    R21: colors.side,
   };
   const seedCells = new Set();
   Object.entries(rawMap).forEach(([cell, sticker]) => {
@@ -860,7 +902,7 @@ function physicalF2LFills(visual) {
 
 function f2lSvg(visual, options = {}) {
   const slot = visual.slot || "FR";
-  const colors = slotPalette(slot);
+  const colors = slotPalette(slot, options.colorContext || f2lColorContext(visual));
   const mirrored = slot.includes("L");
   const drawVisual = normalizeF2LVisualForDrawing(visual, mirrored);
   const cubeTransform = mirrored ? `transform="translate(330 0) scale(-1 1)"` : "";
@@ -889,7 +931,8 @@ function f2lSvg(visual, options = {}) {
 }
 
 function sourceF2LSvg(visual, options = {}) {
-  const fills = physicalF2LFills(visual);
+  const colors = options.colorContext || f2lColorContext(visual);
+  const fills = physicalF2LFills(visual, colors);
   const cubeTransform = visual.mirror ? `transform="translate(330 0) scale(-1 1)"` : "";
   return `
     <svg class="cube-svg f2l-example-svg source-f2l-svg ${options.compact ? "compact-cube" : ""}" viewBox="0 0 330 292" role="img" aria-label="F2L ${visual.scdb ? `из SpeedCubeDB ${visual.scdb}` : ""}: физическая модель угла, ребра и слота">
@@ -959,6 +1002,12 @@ function f2lPaintMatch(item) {
   if (!entries.length) return { ok: true, score: 0, reasons: [] };
   const expected = f2lExpectedRoleMap(item);
   const roles = sideRoleByPaint();
+  const roleToColor = {};
+  const colorToRole = {};
+  Object.entries(roles).forEach(([colorId, role]) => {
+    roleToColor[role] = colorId;
+    colorToRole[colorId] = role;
+  });
   const frontColor = state.f2lPaint.stickers.F11;
   const sideColor = state.f2lPaint.stickers.R11;
   if (frontColor && sideColor && F2L_SIDE_COLORS.has(frontColor) && frontColor === sideColor) {
@@ -977,12 +1026,30 @@ function f2lPaintMatch(item) {
       if (!["front", "side"].includes(expectedRole)) {
         return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)} должен быть ${F2L_ROLE_LABELS[expectedRole] || "другим цветом"}.` };
       }
+      if (roleToColor[expectedRole] && roleToColor[expectedRole] !== colorId) {
+        return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)} не совпадает с уже выбранным цветом ${F2L_ROLE_LABELS[expectedRole]}.` };
+      }
+      if (colorToRole[colorId] && colorToRole[colorId] !== expectedRole) {
+        return { ok: false, score: 0, reasons, mismatch: `${paintColor(colorId).label} уже означает ${F2L_ROLE_LABELS[colorToRole[colorId]]}.` };
+      }
+      roleToColor[expectedRole] = colorId;
+      colorToRole[colorId] = expectedRole;
       score += 1;
       reasons.push(`${cellFriendlyName(cell)}: боковой цвет`);
       continue;
     }
     if (userRole !== expectedRole) {
       return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)}: ожидался ${F2L_ROLE_LABELS[expectedRole]}, а не ${paintColor(colorId).label.toLowerCase()}.` };
+    }
+    if (["front", "side"].includes(userRole)) {
+      if (roleToColor[userRole] && roleToColor[userRole] !== colorId) {
+        return { ok: false, score: 0, reasons, mismatch: `${cellFriendlyName(cell)} конфликтует с цветом ${F2L_ROLE_LABELS[userRole]}.` };
+      }
+      if (colorToRole[colorId] && colorToRole[colorId] !== userRole) {
+        return { ok: false, score: 0, reasons, mismatch: `${paintColor(colorId).label} уже используется как другой боковой цвет.` };
+      }
+      roleToColor[userRole] = colorId;
+      colorToRole[colorId] = userRole;
     }
     score += ["front", "side"].includes(userRole) ? 3 : 4;
     reasons.push(`${cellFriendlyName(cell)}: ${paintColor(colorId).label.toLowerCase()}`);
@@ -1308,19 +1375,33 @@ function renderPLLPaintRows() {
     </div>`;
 }
 
-function pllHoldSvg() {
+function pllFirstRowContext() {
+  const rowId = PLL_SIDE_ROWS[0].id;
+  const colorIds = PLL_STICKER_POSITIONS.map((position) => state.pllPaint.stickers[`${rowId}-${position}`] || "");
+  return {
+    hasPaint: colorIds.some(Boolean),
+    colorIds,
+    colors: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).value : ""),
+    labels: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).label.toLowerCase() : ""),
+  };
+}
+
+function pllHoldSvg(options = {}) {
   const cellSize = 36;
   const gap = 5;
   const x0 = 70;
   const y0 = 50;
-  const topColors = [COLORS.L, COLORS.F, COLORS.R];
+  const rowContext = options.rowContext || pllFirstRowContext();
+  const defaultTopColors = [COLORS.L, COLORS.F, COLORS.R];
+  const topColors = defaultTopColors.map((color, index) => rowContext.colors[index] || color);
   const cells = Array.from({ length: 9 }).map((_, index) => {
     const row = Math.floor(index / 3);
     const col = index % 3;
-    const active = row === 0;
+    const active = row === 0 && (!rowContext.hasPaint || Boolean(rowContext.colors[col]));
     const fill = active ? topColors[col] : "var(--cube-muted)";
     return `<rect x="${x0 + col * (cellSize + gap)}" y="${y0 + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${active ? "var(--accent)" : "var(--cube-line)"}" stroke-width="${active ? 4 : 2}"/>`;
   }).join("");
+  const rowText = rowContext.hasPaint ? "строка 1 из твоей раскраски" : "пример строки 1";
   return `
     <svg class="pll-hold-svg" viewBox="0 0 250 210" role="img" aria-label="Как держать кубик для PLL-подбора: одна передняя грань">
       <text x="125" y="23" text-anchor="middle" class="svg-note">одна грань смотрит прямо на тебя</text>
@@ -1329,7 +1410,7 @@ function pllHoldSvg() {
       ${cells}
       <path d="M62 44 L62 85" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
       <path d="M62 44 L55 55 M62 44 L69 55" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
-      <text x="125" y="188" text-anchor="middle" class="svg-label">строка 1</text>
+      <text x="125" y="188" text-anchor="middle" class="svg-label">${rowText}</text>
       <text x="125" y="204" text-anchor="middle" class="svg-note">перенеси верхний ряд этой стороны</text>
     </svg>`;
 }
@@ -1410,10 +1491,13 @@ function pllSvg(visual) {
 }
 
 function visualSvg(item, options = {}) {
+  const svgOptions = item.stage === "F2L"
+    ? { ...options, colorContext: options.colorContext || f2lColorContext(item) }
+    : options;
   if (item.visual?.type === "oll") return ollSvg(item.visual);
   if (item.visual?.type === "pll") return pllSvg(item.visual);
-  if (item.visual?.type === "f2l-source") return sourceF2LSvg(item.visual, options);
-  return f2lSvg(item.visual || {}, options);
+  if (item.visual?.type === "f2l-source") return sourceF2LSvg(item.visual, svgOptions);
+  return f2lSvg(item.visual || {}, svgOptions);
 }
 
 function algorithmStringHtml(alg, hidden = false) {
@@ -1532,6 +1616,7 @@ function renderActionGuide(item) {
 
 function firstF2LTimeline(item) {
   if (item.id !== "f2l-1") return "";
+  const colorContext = f2lColorContext(item);
   const frames = [
     ["Старт", "Смотри только на цветной угол, ребро и центры: лишние детали не подсвечены.", "source"],
     ["U", "Верхний слой уводит пару в сторону, чтобы правый слот можно было открыть.", "move"],
@@ -1546,7 +1631,7 @@ function firstF2LTimeline(item) {
         ${frames.map(([move, text, kind], index) => `
           <article class="timeline-card">
             <span>${index + 1}</span>
-            ${kind === "source" ? sourceF2LSvg(item.visual, { compact: true }) : kind === "goal" ? slotGoalSvg(item) : `<div class="move-card-badge">${move}</div>`}
+            ${kind === "source" ? sourceF2LSvg(item.visual, { compact: true, colorContext }) : kind === "goal" ? slotGoalSvg(item, { colorContext }) : `<div class="move-card-badge">${move}</div>`}
             <h4>${move}</h4>
             <p>${text}</p>
           </article>`).join("")}
@@ -1562,68 +1647,65 @@ function f2lDetailIsLeft(item) {
 
 function holdF2LSvg(item, options = {}) {
   const left = f2lDetailIsLeft(item);
-  const sideColor = left ? COLORS.L : COLORS.R;
-  const sideName = left ? "оранжевая левая сторона" : "красная правая сторона";
-  const frontX = left ? 152 : 24;
-  const sideX = left ? 24 : 152;
+  const colors = options.colorContext || f2lColorContext(item);
+  const sideName = left ? `${colors.sideColorName} слева` : `${colors.sideColorName} справа`;
   const whiteCell = left ? "00" : "02";
   const showWhiteCorner = Boolean(options.showWhiteCorner);
   const cellSize = 34;
   const gap = 4;
-  const flatCell = (x, y, row, col, fill, active = false) =>
-    `<rect x="${x + col * (cellSize + gap)}" y="${y + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 3.5 : 2}"/>`;
-  const flatFace = (x, y, color, label, type) => {
-    const tiles = [];
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const key = `${row}${col}`;
-        const centerOrBelow = key === "11" || key === "21";
-        const whiteCorner = showWhiteCorner && type === "front" && key === whiteCell;
-        const fill = whiteCorner ? COLORS.D : centerOrBelow ? color : "var(--cube-muted)";
-        tiles.push(flatCell(x, y, row, col, fill, centerOrBelow || whiteCorner));
-      }
+  const x0 = 68;
+  const y0 = 56;
+  const flatCell = (row, col, fill, active = false) =>
+    `<rect x="${x0 + col * (cellSize + gap)}" y="${y0 + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="var(--cube-line)" stroke-width="${active ? 3.5 : 2}"/>`;
+  const tiles = [];
+  for (let row = 0; row < 3; row += 1) {
+    for (let col = 0; col < 3; col += 1) {
+      const key = `${row}${col}`;
+      const centerOrBelow = key === "11" || key === "21";
+      const whiteCorner = showWhiteCorner && key === whiteCell;
+      const fill = whiteCorner ? colors.down : centerOrBelow ? colors.front : "var(--cube-muted)";
+      tiles.push(flatCell(row, col, fill, centerOrBelow || whiteCorner));
     }
-    return `
-      <g>
-        <rect x="${x - 7}" y="${y - 7}" width="124" height="124" rx="16" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="4"/>
-        ${tiles.join("")}
-        <text x="${x + 55}" y="${y + 133}" text-anchor="middle" class="svg-note">${label}</text>
-      </g>`;
-  };
+  }
+  const sideX = left ? 46 : 192;
+  const sideArrow = left ? "M62 126 L78 126" : "M192 126 L176 126";
   return `
-    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 286 224" role="img" aria-label="Как держать кубик: зелёная передняя грань и ${sideName} слота">
-      <text x="143" y="20" text-anchor="middle" class="svg-note">держи: передняя грань + сторона слота</text>
-      <rect x="94" y="34" width="98" height="14" rx="6" fill="${COLORS.U}" stroke="var(--cube-line)" stroke-width="2"/>
-      <rect x="94" y="178" width="98" height="14" rx="6" fill="${COLORS.D}" stroke="var(--cube-line)" stroke-width="2"/>
-      ${flatFace(frontX, 56, COLORS.F, "перед", "front")}
-      ${flatFace(sideX, 56, sideColor, left ? "слева" : "справа", "side")}
+    <svg class="hold-cube-svg hold-face-svg" viewBox="0 0 250 224" role="img" aria-label="Как держать кубик: перед тобой ${colors.frontColorName}, слот ${sideName}">
+      <text x="125" y="22" text-anchor="middle" class="svg-note">одна грань смотрит прямо на тебя</text>
+      <rect x="76" y="36" width="98" height="12" rx="6" fill="${colors.up}" stroke="var(--cube-line)" stroke-width="2"/>
+      <rect x="76" y="180" width="98" height="12" rx="6" fill="${colors.down}" stroke="var(--cube-line)" stroke-width="2"/>
+      <rect x="${x0 - 7}" y="${y0 - 7}" width="124" height="124" rx="16" fill="var(--cube-shell)" stroke="var(--cube-line)" stroke-width="4"/>
+      ${tiles.join("")}
+      <rect x="${sideX}" y="98" width="12" height="56" rx="6" fill="${colors.side}" stroke="var(--cube-line)" stroke-width="2"/>
+      <path d="${sideArrow}" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+      <text x="125" y="210" text-anchor="middle" class="svg-note">перед: ${colors.frontColorName}, слот ${left ? "слева" : "справа"}</text>
     </svg>`;
 }
 
 function renderHoldOrientation(item) {
   if (item.stage === "F2L") {
     const left = f2lDetailIsLeft(item);
-    const colors = slotPalette(left ? "FL" : "FR");
-    const sideText = left ? "оранжевую сторону" : "красную сторону";
+    const colors = f2lColorContext(item);
+    const sideText = `цвет ${colors.sideColorName}`;
     const sideLabel = left ? "Слева" : "Справа";
     const isBaseInsert = item.id === "f2l-1" || item.id === "f2l-2";
     return `
       <div class="hold-orientation">
         <div class="hold-copy">
           <p class="study-label">Как держать кубик</p>
-          <h3>${left ? "Зелёный перед тобой, оранжевый слева" : "Зелёный перед тобой, красный справа"}</h3>
+          <h3>${colors.frontColorName} перед тобой, ${colors.sideColorName} ${left ? "слева" : "справа"}</h3>
           <div class="hold-tags" aria-label="Цвета ориентации кубика">
-            <span><i style="background:${COLORS.U}"></i>Верх: жёлтый</span>
-            <span><i style="background:${COLORS.F}"></i>Перед: зелёный</span>
-            <span><i style="background:${left ? COLORS.L : COLORS.R}"></i>${sideLabel}: ${colors.sideColorName}</span>
-            <span><i style="background:${COLORS.D}"></i>Низ: белый</span>
+            <span><i style="background:${colors.up}"></i>Верх: жёлтый</span>
+            <span><i style="background:${colors.front}"></i>Перед: ${colors.frontColorName}</span>
+            <span><i style="background:${colors.side}"></i>${sideLabel}: ${colors.sideColorName}</span>
+            <span><i style="background:${colors.down}"></i>Низ: белый</span>
           </div>
-          <p>Перед формулой не поворачивай красную или оранжевую грань к себе. Держи ${colors.frontColorName} центр перед собой, белый снизу, жёлтый сверху, а ${sideText} — ${left ? "слева" : "справа"}.</p>
+          <p>${colors.hasSlotColors ? "Здесь используются цвета из твоей раскраски подбора." : "Если подбор не раскрашен, показан стандартный пример."} Держи ${colors.frontColorName} центр перед собой, белый снизу, жёлтый сверху, а ${sideText} — ${left ? "слева" : "справа"}.</p>
           <p>${isBaseInsert
-            ? `Схема рядом показывает именно базовую вставку: ${left ? "белая наклейка угла сверху-слева на передней грани." : "белая наклейка угла сверху-справа на передней грани."}`
+            ? `Схема рядом показывает именно базовую вставку одной стороной: ${left ? "белая наклейка угла сверху-слева на передней грани." : "белая наклейка угла сверху-справа на передней грани."}`
             : "Схема рядом показывает только хват и цвета слота. Положение белого угла и ребра смотри на большой цветной схеме этого случая, а не в этом маленьком окошке."}</p>
         </div>
-        ${holdF2LSvg(item, { showWhiteCorner: isBaseInsert })}
+        ${holdF2LSvg(item, { showWhiteCorner: isBaseInsert, colorContext: colors })}
       </div>`;
   }
   if (item.stage === "OLL") {
@@ -1637,14 +1719,15 @@ function renderHoldOrientation(item) {
         <div class="hold-ll-preview">${visualSvg(item)}</div>
       </div>`;
   }
+  const pllRowContext = pllFirstRowContext();
   return `
     <div class="hold-orientation">
       <div class="hold-copy">
         <p class="study-label">Как держать кубик</p>
-        <h3>Жёлтый верх уже собран</h3>
-        <p>Для выполнения формулы держи одну боковую грань прямо перед собой, белый снизу, жёлтый сверху. Если нужно сравнить другую сторону, поверни весь куб, а не пытайся смотреть на несколько сторон сразу.</p>
+        <h3>${pllRowContext.hasPaint ? "Строка 1 смотрит прямо на тебя" : "Жёлтый верх уже собран"}</h3>
+        <p>Для выполнения формулы держи одну боковую грань прямо перед собой, белый снизу, жёлтый сверху. ${pllRowContext.hasPaint ? "В маленькой схеме показана первая строка из твоего PLL-подбора." : "Если нужно сравнить другую сторону, поверни весь куб, а не пытайся смотреть на несколько сторон сразу."}</p>
       </div>
-      <div class="hold-ll-preview">${pllHoldSvg()}</div>
+      <div class="hold-ll-preview">${pllHoldSvg({ rowContext: pllRowContext })}</div>
     </div>`;
 }
 
@@ -1813,7 +1896,7 @@ function topPositionCell(position, fallback) {
 function f2lRecognitionSvg(item) {
   const visual = item.visual || {};
   const slot = visual.slot || "FR";
-  const colors = slotPalette(slot);
+  const colors = slotPalette(slot, f2lColorContext(item));
   const cornerCell = topPositionCell(visual.corner || "UFR", [2, 2]);
   const edgeCell = topPositionCell(visual.edge || "UR", [2, 1]);
   const slotX = slot.includes("L") ? 54 : 194;
@@ -1856,9 +1939,9 @@ function f2lRecognitionSvg(item) {
     </svg>`;
 }
 
-function slotGoalSvg(item) {
+function slotGoalSvg(item, options = {}) {
   const visual = item.visual || {};
-  const colors = slotPalette(visual.slot || "FR");
+  const colors = slotPalette(visual.slot || "FR", options.colorContext || f2lColorContext(item));
   return `
     <svg class="slot-goal-svg" viewBox="0 0 330 180" role="img" aria-label="Куда вставляется F2L-пара">
       <text x="165" y="24" text-anchor="middle" class="svg-note">цель: пара уходит между центрами</text>
@@ -1874,6 +1957,7 @@ function renderF2LRecognitionBoard(item) {
   if (item.stage !== "F2L") return "";
   const visual = item.visual || {};
   if (visual.type === "f2l-source") {
+    const colorContext = f2lColorContext(item);
     const group = verifiedF2LGroupNames[visual.sourceGroup] || visual.sourceGroup || "F2L";
     const alternatives = (visual.alts || []).slice(1, 3);
     return `
@@ -1884,11 +1968,11 @@ function renderF2LRecognitionBoard(item) {
         </div>
         <div class="recognition-grid">
           <article>
-            ${sourceF2LSvg(visual)}
+            ${sourceF2LSvg(visual, { colorContext })}
             <p><b>Случай:</b> SpeedCubeDB F2L ${visual.scdb}. <b>Группа:</b> ${group}. Цветные наклейки принадлежат физическому углу, ребру и центрам слота; серое не трогай.</p>
           </article>
           <article>
-            ${slotGoalSvg({ visual: { slot: visual.mirror ? "FL" : "FR" } })}
+            ${slotGoalSvg({ visual: { slot: visual.mirror ? "FL" : "FR" } }, { colorContext })}
             <p><b>Слот:</b> ${visual.mirror ? "левый передний" : "правый передний"}. Если твой случай повернут иначе, поверни U или весь куб так, чтобы совпали цветные наклейки.</p>
             ${alternatives.length ? `<p><b>Другие проверенные варианты:</b> ${alternatives.join(" · ")}</p>` : ""}
           </article>
@@ -2213,6 +2297,7 @@ function renderCaseFinder(list) {
 
 function renderPLLFinder(list) {
   const paintedCount = pllPaintEntries().length;
+  const rowContext = pllFirstRowContext();
   return `
     <div class="case-finder pll-finder pll-paint-finder">
       <div class="pll-finder-layout">
@@ -2236,7 +2321,7 @@ function renderPLLFinder(list) {
               <h4>Смотри только на одну переднюю грань</h4>
               <p>Белый держи снизу, жёлтый сверху. Поверни куб так, чтобы нужная боковая сторона смотрела прямо на тебя, и перенеси её верхний ряд как строку 1. Потом поверни весь куб и так же занеси строки 2, 3 и 4.</p>
             </div>
-            ${pllHoldSvg()}
+            ${pllHoldSvg({ rowContext })}
           </div>
           <ol>
             <li>Не смотри на центры: для PLL нужны только боковые наклейки верхнего слоя.</li>
@@ -2277,7 +2362,7 @@ function renderF2LPainter(list) {
             <li>Поставь нужный слот в рабочее положение: спереди справа.</li>
             <li>Закрась передний и боковой центры реальными цветами своего кубика.</li>
             <li>Закрась наклейки белого угла и ребра пары.</li>
-            <li>Боковые цвета считаются относительными: зелёно-оранжевый слот сравнивается так же, как зелёно-красный.</li>
+            <li>Боковые цвета сравниваются по форме случая, но один выбранный цвет всегда означает только одну сторону слота.</li>
           </ol>
         </div>
       </div>
@@ -2286,11 +2371,14 @@ function renderF2LPainter(list) {
 
 function renderCaseFacts(item) {
   if (item.stage !== "F2L") return "";
+  const colors = f2lColorContext(item);
   if (item.visual?.type === "f2l-source") {
     const group = verifiedF2LGroupNames[item.visual.sourceGroup] || item.visual.sourceGroup || "F2L";
-    return `<p class="case-orientation">Формула сверена со SpeedCubeDB: F2L ${item.visual.scdb}, группа “${group}”. Схема построена как физическая модель: цветные только угол, ребро и центры слота.</p>`;
+    const colorNote = colors.hasPaint
+      ? ` Сейчас схема перекрашена под твой подбор: передний цвет ${colors.frontColorName}, боковой ${colors.sideColorName}.`
+      : "";
+    return `<p class="case-orientation">Формула сверена со SpeedCubeDB: F2L ${item.visual.scdb}, группа “${group}”. Схема построена как физическая модель: цветные только угол, ребро и центры слота.${colorNote}</p>`;
   }
-  const colors = slotPalette(item.visual?.slot || "FR");
   return `<p class="case-orientation">На схеме пример одного слота: белый снизу, ${colors.frontColorName} спереди, ${colors.sideColorName} ${colors.sideName === "правая" ? "справа" : "слева"}. Цвета ищи прямо на кубике, без отдельных плашек.</p>`;
 }
 
