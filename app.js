@@ -1292,7 +1292,7 @@ function holdF2LSvg(item, options = {}) {
   const sideName = left ? "оранжевая левая сторона" : "красная правая сторона";
   const frontX = left ? 152 : 24;
   const sideX = left ? 24 : 152;
-  const whiteCell = left ? "02" : "00";
+  const whiteCell = left ? "00" : "02";
   const showWhiteCorner = Boolean(options.showWhiteCorner);
   const cellSize = 34;
   const gap = 4;
@@ -1304,7 +1304,7 @@ function holdF2LSvg(item, options = {}) {
       for (let col = 0; col < 3; col += 1) {
         const key = `${row}${col}`;
         const centerOrBelow = key === "11" || key === "21";
-        const whiteCorner = showWhiteCorner && type === "side" && key === whiteCell;
+        const whiteCorner = showWhiteCorner && type === "front" && key === whiteCell;
         const fill = whiteCorner ? COLORS.D : centerOrBelow ? color : "var(--cube-muted)";
         tiles.push(flatCell(x, y, row, col, fill, centerOrBelow || whiteCorner));
       }
@@ -1346,7 +1346,7 @@ function renderHoldOrientation(item) {
           </div>
           <p>Перед формулой не поворачивай красную или оранжевую грань к себе. Держи ${colors.frontColorName} центр перед собой, белый снизу, жёлтый сверху, а ${sideText} — ${left ? "слева" : "справа"}.</p>
           <p>${isBaseInsert
-            ? `Схема рядом показывает именно базовую вставку: ${left ? "белая наклейка угла сверху-справа на боковой стороне." : "белая наклейка угла сверху-слева на боковой стороне."}`
+            ? `Схема рядом показывает именно базовую вставку: ${left ? "белая наклейка угла сверху-слева на передней грани." : "белая наклейка угла сверху-справа на передней грани."}`
             : "Схема рядом показывает только хват и цвета слота. Положение белого угла и ребра смотри на большой цветной схеме этого случая, а не в этом маленьком окошке."}</p>
         </div>
         ${holdF2LSvg(item, { showWhiteCorner: isBaseInsert })}
