@@ -837,35 +837,76 @@ button {
   padding-left: 20px;
 }
 
-.pll-strip-grid {
+.pll-hold-card {
   display: grid;
-  gap: 9px;
-}
-
-.pll-strip-row {
-  display: block;
-  padding: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
 }
 
-.pll-strip-cells {
+.pll-hold-card h4,
+.pll-hold-card p {
+  margin: 0;
+}
+
+.pll-hold-card h4 {
+  font-size: 1rem;
+}
+
+.pll-hold-svg {
+  width: 100%;
+  max-width: 220px;
+  justify-self: center;
+}
+
+.pll-strip-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(44px, 1fr));
+  gap: 10px;
+}
+
+.pll-strip-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: stretch;
   gap: 8px;
   padding: 8px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.pll-strip-number {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  border-radius: 8px;
+  background: var(--token-bg);
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.pll-strip-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(58px, 1fr));
+  gap: 10px;
 }
 
 .pll-strip-sticker {
   display: grid;
   place-items: center;
   aspect-ratio: 1 / 1;
-  min-height: 0;
-  border: 2px solid var(--cube-line);
+  min-height: 58px;
+  border: 3px solid var(--cube-line);
   border-radius: 8px;
   color: #fff;
+  font-size: 1.05rem;
   font-weight: 950;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 .pll-strip-sticker {
@@ -878,6 +919,11 @@ button {
 .pll-strip-sticker:hover,
 .pll-strip-sticker:focus {
   opacity: 1;
+}
+
+.pll-strip-sticker.painted {
+  border-color: var(--arrow-fill);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.28), 0 0 0 2px var(--accent-soft);
 }
 
 .pll-strip-sticker:hover,
@@ -1958,6 +2004,7 @@ button {
   .f2l-wizard,
   .paint-workspace,
   .pll-finder-layout,
+  .pll-hold-card,
   .case-hero,
   .hold-orientation,
   .recognition-grid,
@@ -2081,6 +2128,26 @@ button {
 
   .paint-palette button {
     min-height: 58px;
+  }
+
+  .pll-hold-card {
+    padding: 10px;
+  }
+
+  .pll-strip-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 7px;
+    padding: 7px;
+  }
+
+  .pll-strip-number,
+  .pll-strip-sticker {
+    min-height: 54px;
+  }
+
+  .pll-strip-cells {
+    grid-template-columns: repeat(3, minmax(54px, 1fr));
+    gap: 7px;
   }
 
   .wizard-options {
