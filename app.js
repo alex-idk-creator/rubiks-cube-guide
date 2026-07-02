@@ -25,6 +25,12 @@ const F2L_PAINT_COLORS = [
 ];
 
 const F2L_SIDE_COLORS = new Set(["green", "blue", "red", "orange"]);
+const F2L_ADJACENT_SIDE_COLORS = {
+  green: ["red", "orange"],
+  orange: ["green", "blue"],
+  blue: ["orange", "red"],
+  red: ["blue", "green"],
+};
 const F2L_FIXED_COLOR_ROLES = { white: "down", yellow: "up" };
 const F2L_ROLE_LABELS = {
   front: "цвет переднего центра",
@@ -405,6 +411,7 @@ const state = {
   f2lPaint: {
     selectedColor: "white",
     stickers: {},
+    notice: "",
   },
   pllPaint: {
     selectedColor: "green",
@@ -672,6 +679,31 @@ function slotPalette(slot = "FR", overrides = {}) {
 
 function sideColorOption(id) {
   return F2L_SIDE_COLORS.has(id) ? paintColor(id) : null;
+}
+
+function areAdjacentSideColors(first, second) {
+  return Boolean(F2L_ADJACENT_SIDE_COLORS[first]?.includes(second));
+}
+
+function sideColorNames(ids = []) {
+  return ids.map((id) => paintColor(id).label.toLowerCase()).join(" или ");
+}
+
+function f2lSlotColorProblem(front, side) {
+  if (!front || !side || !F2L_SIDE_COLORS.has(front) || !F2L_SIDE_COLORS.has(side)) return "";
+  if (front === side) return "Центры слота не могут быть одного цвета.";
+  if (!areAdjacentSideColors(front, side)) {
+    return `${paintColor(front).label} и ${paintColor(side).label} стоят напротив друг друга, такого F2L-слота не бывает.`;
+  }
+  return "";
+}
+
+function canPaintF2LCenter(cell, colorId) {
+  if (!["F11", "R11"].includes(cell) || !F2L_SIDE_COLORS.has(colorId)) return { ok: true, message: "" };
+  const otherCell = cell === "F11" ? "R11" : "F11";
+  const otherColor = state.f2lPaint.stickers[otherCell];
+  const problem = f2lSlotColorProblem(cell === "F11" ? colorId : otherColor, cell === "F11" ? otherColor : colorId);
+  return problem ? { ok: false, message: problem } : { ok: true, message: "" };
 }
 
 function f2lVisualIsLeft(visual = {}) {
@@ -1013,8 +1045,9 @@ function f2lPaintMatch(item) {
   });
   const frontColor = state.f2lPaint.stickers.F11;
   const sideColor = state.f2lPaint.stickers.R11;
-  if (frontColor && sideColor && F2L_SIDE_COLORS.has(frontColor) && frontColor === sideColor) {
-    return { ok: false, score: 0, reasons: [], mismatch: "Центры слота не могут быть одного цвета." };
+  const slotColorProblem = f2lSlotColorProblem(frontColor, sideColor);
+  if (slotColorProblem) {
+    return { ok: false, score: 0, reasons: [], mismatch: slotColorProblem };
   }
 
   let score = 0;
@@ -1064,6 +1097,12 @@ function f2lPaintMatch(item) {
 function f2lPaintHint(listLength) {
   const entries = paintEntries();
   if (!entries.length) return "Начни с двух центров слота: переднего и бокового. Потом отметь белый угол и ребро пары.";
+  const front = state.f2lPaint.stickers.F11;
+  const side = state.f2lPaint.stickers.R11;
+  const slotColorProblem = f2lSlotColorProblem(front, side);
+  if (slotColorProblem) return slotColorProblem;
+  if (front && F2L_SIDE_COLORS.has(front) && !side) return `Теперь выбери боковой центр. Для ${paintColor(front).label.toLowerCase()} подходят только ${sideColorNames(F2L_ADJACENT_SIDE_COLORS[front])}.`;
+  if (side && F2L_SIDE_COLORS.has(side) && !front) return `Теперь выбери передний центр. С ${paintColor(side).label.toLowerCase()} может стоять только ${sideColorNames(F2L_ADJACENT_SIDE_COLORS[side])}.`;
   if (!state.f2lPaint.stickers.F11 || !state.f2lPaint.stickers.R11) return "Чтобы боковые цвета стали относительными, отметь оба центра слота.";
   if (!entries.some(([, color]) => color === "white")) return "Теперь отметь белую наклейку угла.";
   if (listLength > 8) return "Чтобы сузить список, добавь две наклейки ребра или вторую боковую наклейку угла.";
@@ -1151,12 +1190,18 @@ function renderF2LPalette() {
 function renderSlotColorStatus() {
   const front = state.f2lPaint.stickers.F11;
   const side = state.f2lPaint.stickers.R11;
+  const problem = state.f2lPaint.notice || f2lSlotColorProblem(front, side);
+  const hint = !problem && front && F2L_SIDE_COLORS.has(front) && !side
+    ? `К ${paintColor(front).label.toLowerCase()} центру можно поставить ${sideColorNames(F2L_ADJACENT_SIDE_COLORS[front])}.`
+    : !problem && side && F2L_SIDE_COLORS.has(side) && !front
+      ? `С ${paintColor(side).label.toLowerCase()} боковым центром совместимы ${sideColorNames(F2L_ADJACENT_SIDE_COLORS[side])}.`
+      : "";
   const chip = (label, colorId) => `
     <span class="slot-color-chip">
       <i style="background:${colorId ? paintColor(colorId).value : "var(--cube-muted)"}"></i>
       ${label}: ${colorId ? paintColor(colorId).label.toLowerCase() : "не выбран"}
     </span>`;
-  return `<div class="slot-color-row">${chip("передний центр", front)}${chip("боковой центр", side)}</div>`;
+  return `<div class="slot-color-row">${chip("передний центр", front)}${chip("боковой центр", side)}${problem ? `<p class="slot-color-warning">${problem}</p>` : hint ? `<p class="slot-color-hint">${hint}</p>` : ""}</div>`;
 }
 
 function renderPaintResultReason(item) {
@@ -1227,13 +1272,11 @@ function pllPatternVariants(pattern) {
   const seen = new Set();
   for (let startRow = 0; startRow < 4; startRow += 1) {
     for (const direction of [1, -1]) {
-      for (const flipCells of [false, true]) {
-        const grid = transformPLLGrid(base, startRow, direction, flipCells);
-        const key = grid.join("|");
-        if (seen.has(key)) continue;
-        seen.add(key);
-        variants.push({ grid, startRow, direction, flipCells });
-      }
+      const grid = transformPLLGrid(base, startRow, direction, false);
+      const key = grid.join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      variants.push({ grid, startRow, direction, flipCells: false });
     }
   }
   return variants;
@@ -1286,10 +1329,9 @@ function pllGridSimilarity(candidateGrid, userGrid) {
 }
 
 function pllVariantText(variant) {
-  const start = variant.startRow ? `начиная со строки ${variant.startRow + 1}` : "начиная с первой строки";
-  const direction = variant.direction === 1 ? "в прямом обходе" : "в обратном обходе";
-  const flip = variant.flipCells ? ", ряды читаются справа налево" : "";
-  return `${start}, ${direction}${flip}`;
+  const start = variant.startRow ? `первая строка ввода соответствует стороне ${variant.startRow + 1} эталона` : "первая строка ввода совпала с первой стороной эталона";
+  const direction = variant.direction === 1 ? "стороны идут по кругу в прямом порядке" : "стороны идут по кругу в обратном порядке";
+  return `${start}; ${direction}`;
 }
 
 function pllPaintMatch(item) {
@@ -1338,11 +1380,11 @@ function pllPaintMatch(item) {
 
 function pllPaintHint(listLength) {
   const entries = pllPaintEntries();
-  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: четыре строки по три клетки. Начинать можно с любой стороны; главное — заноси строки подряд вокруг кубика.";
-  if (!listLength) return "Совпадений нет. Проверь одну-две наклейки: подбор уже учитывает поворот кубика, обратный обход и чтение ряда справа налево.";
+  if (!entries.length) return "Закрась 12 боковых наклеек верхнего слоя: четыре строки по три клетки. Начинать можно с любой стороны; дальше заноси соседние стороны по кругу.";
+  if (!listLength) return "Совпадений нет. Проверь порядок: каждую сторону держи лицом к себе и читай её верхнюю полоску слева направо. Верхний слой отдельно не крути.";
   if (entries.length < 12) return `Закрашено ${entries.length} из 12. Чем больше наклеек отметишь, тем меньше вариантов останется.`;
-  if (listLength === 1) return "Полная раскраска дала один PLL. Открой разбор и сравни перестановку перед формулой.";
-  return `Все 12 наклеек закрашены, осталось ${listLength}. Это может быть зеркальная пара: сравни стрелки на карточках.`;
+  if (listLength === 1) return "Полная раскраска дала один PLL. Маленькая схема покажет, какая из твоих строк должна смотреть на тебя перед формулой.";
+  return `Все 12 наклеек закрашены, осталось ${listLength}. Проверь порядок обхода сторон; если всё верно, открой карточки и сравни стрелки перестановки.`;
 }
 
 function renderPLLPalette() {
@@ -1383,9 +1425,74 @@ function pllFirstRowContext() {
   const colorIds = PLL_STICKER_POSITIONS.map((position) => state.pllPaint.stickers[`${rowId}-${position}`] || "");
   return {
     hasPaint: colorIds.some(Boolean),
+    source: "manual",
+    rowNumber: 1,
     colorIds,
     colors: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).value : ""),
     labels: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).label.toLowerCase() : ""),
+  };
+}
+
+function pllUserRowIndexForBaseSide(variant, baseSideIndex) {
+  if (!variant) return -1;
+  for (let step = 0; step < 4; step += 1) {
+    if ((variant.startRow + variant.direction * step + 8) % 4 === baseSideIndex) return step;
+  }
+  return -1;
+}
+
+function pllRowContextFromUserRow(rowIndex, details = {}) {
+  const row = PLL_SIDE_ROWS[rowIndex] || PLL_SIDE_ROWS[0];
+  const colorIds = PLL_STICKER_POSITIONS.map((position) => state.pllPaint.stickers[`${row.id}-${position}`] || "");
+  return {
+    hasPaint: colorIds.some(Boolean),
+    source: details.source || "paint",
+    rowNumber: rowIndex + 1,
+    colorIds,
+    colors: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).value : ""),
+    labels: colorIds.map((colorId) => colorId ? pllPaintColor(colorId).label.toLowerCase() : ""),
+    caseName: details.caseName || "",
+    fuzzy: Boolean(details.fuzzy),
+  };
+}
+
+function pllCaseFrontRowContext(item) {
+  const pattern = PLL_CASE_PATTERNS[item?.id];
+  const colorIds = pattern?.front || ["green", "green", "green"];
+  return {
+    hasPaint: false,
+    source: "case",
+    rowNumber: 0,
+    colorIds,
+    colors: colorIds.map((colorId) => pllPaintColor(colorId).value),
+    labels: colorIds.map((colorId) => pllPaintColor(colorId).label.toLowerCase()),
+    caseName: item?.name || "",
+    fuzzy: false,
+  };
+}
+
+function pllHoldContextForItem(item) {
+  const match = pllPaintMatch(item);
+  if (pllPaintEntries().length && match.ok && match.variant && !match.fuzzy) {
+    const frontRow = pllUserRowIndexForBaseSide(match.variant, 2);
+    if (frontRow >= 0) {
+      return pllRowContextFromUserRow(frontRow, { source: "match", caseName: item.name });
+    }
+  }
+  return pllCaseFrontRowContext(item);
+}
+
+function pllFinderHoldContext(list) {
+  if (list.length === 1) return pllHoldContextForItem(list[0]);
+  return {
+    hasPaint: false,
+    source: "manual",
+    rowNumber: 1,
+    colorIds: [],
+    colors: [],
+    labels: [],
+    caseName: "",
+    fuzzy: false,
   };
 }
 
@@ -1400,11 +1507,15 @@ function pllHoldSvg(options = {}) {
   const cells = Array.from({ length: 9 }).map((_, index) => {
     const row = Math.floor(index / 3);
     const col = index % 3;
-    const active = row === 0 && (!rowContext.hasPaint || Boolean(rowContext.colors[col]));
+    const active = row === 0 && (rowContext.source === "case" || !rowContext.hasPaint || Boolean(rowContext.colors[col]));
     const fill = active ? topColors[col] : "var(--cube-muted)";
     return `<rect x="${x0 + col * (cellSize + gap)}" y="${y0 + row * (cellSize + gap)}" width="${cellSize}" height="${cellSize}" rx="7" fill="${fill}" opacity="${active ? 1 : 0.34}" stroke="${active ? "var(--accent)" : "var(--cube-line)"}" stroke-width="${active ? 4 : 2}"/>`;
   }).join("");
-  const rowText = rowContext.hasPaint ? "строка 1 из твоей раскраски" : "пример строки 1";
+  const rowText = rowContext.source === "match"
+    ? `лицом к тебе: строка ${rowContext.rowNumber} из твоей раскраски`
+    : rowContext.source === "case"
+      ? `передняя сторона для ${rowContext.caseName || "этого PLL"}`
+      : "пример одной боковой стороны";
   return `
     <svg class="pll-hold-svg" viewBox="0 0 250 210" role="img" aria-label="Как держать кубик для PLL-подбора: одна передняя грань">
       <text x="125" y="23" text-anchor="middle" class="svg-note">одна грань смотрит прямо на тебя</text>
@@ -1414,7 +1525,7 @@ function pllHoldSvg(options = {}) {
       <path d="M62 44 L62 85" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
       <path d="M62 44 L55 55 M62 44 L69 55" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
       <text x="125" y="188" text-anchor="middle" class="svg-label">${rowText}</text>
-      <text x="125" y="204" text-anchor="middle" class="svg-note">перенеси верхний ряд этой стороны</text>
+      <text x="125" y="204" text-anchor="middle" class="svg-note">${rowContext.source === "match" ? "эту сторону держи лицом перед формулой" : "перенеси верхний ряд этой стороны"}</text>
     </svg>`;
 }
 
@@ -1717,18 +1828,25 @@ function renderHoldOrientation(item) {
         <div class="hold-copy">
           <p class="study-label">Как держать кубик</p>
           <h3>Жёлтый крест сверху</h3>
-          <p>Поверни верхний слой, пока рисунок углов совпадет со схемой. Ориентир: ${item.visual?.hold || "сравни боковые жёлтые наклейки"}.</p>
+          <p>Держи кубик жёлтой стороной вверх, белой вниз. Не переворачивай куб: крути только верхний слой U, пока верхние углы и маленькие боковые жёлтые наклейки не совпадут со схемой.</p>
+          <p>Ориентир: ${item.visual?.hold || "сравни боковые жёлтые наклейки"}.</p>
         </div>
         <div class="hold-ll-preview">${visualSvg(item)}</div>
       </div>`;
   }
-  const pllRowContext = pllFirstRowContext();
+  const pllRowContext = pllHoldContextForItem(item);
+  const pllHeading = pllRowContext.source === "match"
+    ? `Строка ${pllRowContext.rowNumber} из твоей раскраски смотрит на тебя`
+    : `Передняя сторона для ${item.name}`;
+  const pllCopy = pllRowContext.source === "match"
+    ? "Сайт сопоставил твои 12 наклеек с этим PLL и выбрал сторону, которую надо держать лицом к себе перед формулой."
+    : "Подбор ещё не дал точную сторону из твоей раскраски, поэтому показана эталонная передняя сторона этого PLL. Поверни верхний слой U, пока боковые цвета совпадут с этой схемой.";
   return `
     <div class="hold-orientation">
       <div class="hold-copy">
         <p class="study-label">Как держать кубик</p>
-        <h3>${pllRowContext.hasPaint ? "Строка 1 смотрит прямо на тебя" : "Жёлтый верх уже собран"}</h3>
-        <p>Для выполнения формулы держи одну боковую грань прямо перед собой, белый снизу, жёлтый сверху. ${pllRowContext.hasPaint ? "В маленькой схеме показана первая строка из твоего PLL-подбора." : "Если нужно сравнить другую сторону, поставь эту боковую грань лицом к себе; отдельный слой при этом не крути."}</p>
+        <h3>${pllHeading}</h3>
+        <p>Держи жёлтый сверху, белый снизу, одну боковую сторону прямо перед собой. ${pllCopy}</p>
       </div>
       <div class="hold-ll-preview">${pllHoldSvg({ rowContext: pllRowContext })}</div>
     </div>`;
@@ -2008,6 +2126,7 @@ function resetF2LFilters() {
 function resetF2LPaint() {
   state.f2lPaint.stickers = {};
   state.f2lPaint.selectedColor = "white";
+  state.f2lPaint.notice = "";
 }
 
 function resetPLLPaint() {
@@ -2300,14 +2419,15 @@ function renderCaseFinder(list) {
 
 function renderPLLFinder(list) {
   const paintedCount = pllPaintEntries().length;
-  const rowContext = pllFirstRowContext();
+  const rowContext = pllFinderHoldContext(list);
+  const exactSingle = paintedCount === 12 && list.length === 1;
   return `
     <div class="case-finder pll-finder pll-paint-finder">
       <div class="pll-finder-layout">
         <div class="pll-finder-visual pll-strip-panel">
           <p class="eyebrow">Подобрать PLL</p>
           <h3>Раскрась четыре боковые полоски</h3>
-          <p>Жёлтый верх уже собран. Раскрась четыре строки по три наклейки: это боковые наклейки верхнего слоя. Начинай с любой стороны, но остальные строки заноси по кругу вокруг кубика.</p>
+          <p>Жёлтый верх уже собран. Выбери любую боковую сторону, поставь её лицом к себе и занеси три верхние боковые наклейки как строку 1. Потом поверни куб целиком к следующей стороне и занеси строки 2, 3 и 4 по кругу. Центры не нужны.</p>
           ${renderPLLPaintRows()}
           ${renderPLLPalette()}
           <div class="paint-actions">
@@ -2321,14 +2441,15 @@ function renderPLLFinder(list) {
           <div class="pll-hold-card">
             <div>
               <p class="eyebrow">Как держать</p>
-              <h4>Смотри только на одну переднюю грань</h4>
-              <p>Белый держи снизу, жёлтый сверху. Поставь первую боковую сторону лицом к себе и перенеси её верхний ряд как строку 1. Потом так же подставь лицом к себе следующую боковую сторону и занеси строки 2, 3 и 4.</p>
+              <h4>${exactSingle ? `Для найденного PLL: строка ${rowContext.rowNumber} лицом к тебе` : "Сначала введи все 12 боковых наклеек"}</h4>
+              <p>${exactSingle ? "Это не случайная первая строка: сайт сопоставил раскраску с PLL и показывает сторону, которую надо держать перед формулой." : "Пока вариантов несколько, маленькая схема показывает только принцип: держи одну боковую сторону прямо перед собой, жёлтый сверху, белый снизу."}</p>
             </div>
             ${pllHoldSvg({ rowContext })}
           </div>
           <ol>
             <li>Не смотри на центры: для PLL нужны только боковые наклейки верхнего слоя.</li>
             <li>В каждой строке раскрась три клетки: слева, посередине и справа.</li>
+            <li>Каждую следующую строку снимай с соседней боковой стороны, поворачивая весь куб в руках, а не верхний слой отдельно.</li>
             <li>Если ошибся, выбери “Стереть” и нажми на лишнюю клетку.</li>
           </ol>
           <p class="finder-result"><strong>${list.length}</strong> подходящих PLL. Открой карточку, чтобы увидеть перестановку крупно.</p>
@@ -2576,8 +2697,19 @@ document.addEventListener("click", async (event) => {
   if (paintCell) {
     const cell = paintCell.dataset.paintCell;
     const color = state.f2lPaint.selectedColor;
-    if (color === "gray") delete state.f2lPaint.stickers[cell];
-    else state.f2lPaint.stickers[cell] = color;
+    if (color === "gray") {
+      delete state.f2lPaint.stickers[cell];
+      state.f2lPaint.notice = "";
+    } else {
+      const centerCheck = canPaintF2LCenter(cell, color);
+      if (!centerCheck.ok) {
+        state.f2lPaint.notice = centerCheck.message;
+        render();
+        return;
+      }
+      state.f2lPaint.stickers[cell] = color;
+      state.f2lPaint.notice = "";
+    }
     selectFirstVisible();
     render();
     return;
