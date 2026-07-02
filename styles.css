@@ -1181,6 +1181,26 @@ button {
   gap: 8px;
 }
 
+.slot-color-row p {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.slot-color-hint {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.slot-color-warning {
+  background: rgba(230, 76, 67, 0.13);
+  border: 1px solid rgba(230, 76, 67, 0.42);
+  color: var(--ink);
+}
+
 .slot-color-chip {
   display: flex;
   align-items: center;
